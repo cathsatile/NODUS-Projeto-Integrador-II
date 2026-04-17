@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 .login-container {
-    position: fixed;
+    height: fit-content;
     inset: 0;
-    position: fixed;
+    padding: 80px 0px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -51,7 +51,7 @@
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        gap: 20px;
+        gap: 10px;
         background-color: white;
         border-radius: 10px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
@@ -64,6 +64,7 @@
             flex-direction: column;
             gap: 8px;
             width: 100%;
+            margin: 10px 0px;
 
             .title-input {
                 color: rgb(105, 105, 105);
@@ -103,6 +104,7 @@
         border: none;
         background: var(--gradient-color);
         border-radius: 5px;
+        margin-top: 10px;
     }
 
     .divisor {
@@ -166,11 +168,11 @@
         justify-content: center;
         align-items: center;
         max-width: 200px;
-        margin-top: 20px;
     }
 
     .bloco {
         opacity: 0;
+        gap: 10px;
         transform: scale(0.95);
         transition: all 0.2s ease;
     }

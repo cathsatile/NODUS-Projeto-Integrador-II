@@ -34,19 +34,23 @@
                 <img src="assets/images/back_arrow.svg">
                 VOLTAR</button>
         </div>
-        <div class="input-container">
-            <label class="title-input">EMAIL</label>
-            <input class="input" type="email" placeholder="seu@email.com">
-        </div>
+        <form [formGroup]="loginForm" (ngSubmit)="fazerLogin()">
+            <div class="input-container">
+                <label class="title-input">EMAIL</label>
+                <input class="input" type="email" placeholder="seu@email.com" required
+                formControlName="email">
+            </div>
 
-        <div class="input-container">
-            <label class="title-input">SENHA</label>
-            <input class="input" type="password" placeholder="*******">
-        </div>
+            <div class="input-container">
+                <label class="title-input">SENHA</label>
+                <input class="input" type="password" placeholder="*******" required
+                formControlName="senha">
+            </div>
 
-        <button class="input-button">
-            Entrar
-        </button>
+            <button class="input-button" type="submit">
+                Entrar
+            </button>
+        </form>
     </div>
     }
 
@@ -57,32 +61,43 @@
                 <img src="assets/images/back_arrow.svg">
                 VOLTAR</button>
         </div>
-        <div class="input-container">
-            <label class="title-input">NOME</label>
-            <input class="input" type="text" placeholder="Seu nome">
-        </div>
-        <div class="input-container">
-            <label class="title-input">EMAIL</label>
-            <input class="input" type="email" placeholder="seu@email.com">
-        </div>
+        <form [formGroup]="cadastroForm" (ngSubmit)="fazerCadastro()">
+            <div class="input-container">
+                <label class="title-input">NOME</label>
+                <input class="input" type="text" placeholder="Seu nome" required
+                formControlName="nome">
+            </div>
+            <div class="input-container">
+                <label class="title-input">EMAIL</label>
+                <input class="input" type="email" placeholder="seu@email.com" required
+                formControlName="email">
+            </div>
+            <div class="input-container">
+                <label class="title-input">CRP</label>
+                <input class="input" type="numbetr" placeholder="Seu CRP" required
+                formControlName="crp">
+            </div>
 
-        <div class="input-container">
-            <label class="title-input">TELEFONE</label>
-            <input class="input" type="text" placeholder="Telefone (opicional)">
-        </div>
-        <div class="input-container">
-            <label class="title-input">SENHA</label>
-            <input class="input" type="password" placeholder="*******">
-        </div>
-        <div class="input-container">
-            <label class="title-input">CONFIRMAR SENHA</label>
-            <input class="input" type="password" placeholder="*******">
-        </div>
+            <div class="input-container">
+                <label class="title-input">TELEFONE</label>
+                <input class="input" type="text" placeholder="Telefone (opicional)"
+                formControlName="telefone">
+            </div>
+            <div class="input-container">
+                <label class="title-input">SENHA</label>
+                <input class="input" type="password" placeholder="*******" required
+                formControlName="senha">
+            </div>
+            <div class="input-container">
+                <label class="title-input">CONFIRMAR SENHA</label>
+                <input class="input" type="password" placeholder="*******" required
+                formControlName="confirmar_senha">
+            </div>
 
-        <button class="input-button">
-            Cadastrar
-        </button>
-
+            <button class="input-button" type="submit">
+                Cadastrar
+            </button>
+        </form>
     </div>
     }
 
