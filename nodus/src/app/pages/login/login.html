@@ -1,0 +1,89 @@
+<div class="login-container">
+    <div class="img-container">
+        <img class="logo" src="assets/images/logo_branca.png">
+    </div>
+
+    <div class="title-container">
+        <h1 class="title">
+            Nodus
+        </h1>
+        <h3 class="subtitle">
+            Gestão de sessões terapêuticas
+        </h3>
+    </div>
+
+    @if(tipoBotao == ''){
+    <div class="botoes bloco" [class.ativo]="tipoBotao == ''">
+        <button class="input-button" (click)="irParaLogin()">
+            Login
+        </button>
+        <div class="divisor">
+            <span class="ou">Ou</span>
+            <div class="separador"></div>
+        </div>
+        <button class="input-button" (click)="irParaCadastro()">
+            Cadastro
+        </button>
+    </div>
+    }
+
+    @if(tipoBotao == 'login'){
+    <div class="bloco login-cadastro " [class.ativo]="tipoBotao == 'login'">
+        <div class="left">
+            <button class="back" (click)="voltarBotoes()">
+                <img src="assets/images/back_arrow.svg">
+                VOLTAR</button>
+        </div>
+        <div class="input-container">
+            <label class="title-input">EMAIL</label>
+            <input class="input" type="email" placeholder="seu@email.com">
+        </div>
+
+        <div class="input-container">
+            <label class="title-input">SENHA</label>
+            <input class="input" type="password" placeholder="*******">
+        </div>
+
+        <button class="input-button">
+            Entrar
+        </button>
+    </div>
+    }
+
+    @if(tipoBotao == 'cadastro'){
+    <div class="bloco login-cadastro " [class.ativo]="tipoBotao == 'cadastro'">
+        <div class="left">
+            <button class="back" (click)="voltarBotoes()">
+                <img src="assets/images/back_arrow.svg">
+                VOLTAR</button>
+        </div>
+        <div class="input-container">
+            <label class="title-input">NOME</label>
+            <input class="input" type="text" placeholder="Seu nome">
+        </div>
+        <div class="input-container">
+            <label class="title-input">EMAIL</label>
+            <input class="input" type="email" placeholder="seu@email.com">
+        </div>
+
+        <div class="input-container">
+            <label class="title-input">TELEFONE</label>
+            <input class="input" type="text" placeholder="Telefone (opicional)">
+        </div>
+        <div class="input-container">
+            <label class="title-input">SENHA</label>
+            <input class="input" type="password" placeholder="*******">
+        </div>
+        <div class="input-container">
+            <label class="title-input">CONFIRMAR SENHA</label>
+            <input class="input" type="password" placeholder="*******">
+        </div>
+
+        <button class="input-button">
+            Cadastrar
+        </button>
+
+    </div>
+    }
+
+</div>

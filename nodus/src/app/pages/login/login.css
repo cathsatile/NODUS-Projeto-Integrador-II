@@ -1,0 +1,182 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+.login-container {
+    position: fixed;
+    inset: 0;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-family: 'DM Sans', sans-serif;
+    background-color: rgb(236, 236, 236);
+
+    .img-container {
+        padding: 5px;
+        border-radius: 5px;
+        background: var(--gradient-color);
+
+        img {
+            width: 64px;
+            height: 64px;
+        }
+    }
+
+
+
+    .title-container {
+        text-align: center;
+        gap: 5px;
+        margin-bottom: 10px;
+
+        .title {
+            margin: 0;
+            font-size: 40px;
+            font-family: 'Playfair Display', serif;
+            background: var(--gradient-color);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            margin: 0;
+            font-size: 18px;
+            color: grey;
+        }
+    }
+
+    .login-cadastro {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        width: 100%;
+        max-width: 250px;
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+
+            .title-input {
+                color: rgb(105, 105, 105);
+                font-size: 12px;
+            }
+
+            .input {
+                border-radius: 5px;
+                padding: 8px;
+                border: 1px solid rgb(200, 200, 200);
+                background-color: rgb(230, 229, 229);
+                width: 90%;
+                outline: none;
+                font-size: 14px;
+            }
+
+            .input-button {
+                outline: none;
+                width: 100%;
+                max-width: 300px;
+                padding: 10px;
+                color: white;
+                border: none;
+                background: var(--gradient-color);
+                border-radius: 5px;
+            }
+        }
+
+    }
+
+    .input-button {
+        outline: none;
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        color: white;
+        border: none;
+        background: var(--gradient-color);
+        border-radius: 5px;
+    }
+
+    .divisor {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 400px;
+        width: 100%;
+        gap: 10px;
+        margin: 15px 0px;
+
+        .ou {
+            color: grey;
+            font-size: 12px;
+            background-color: rgb(236, 236, 236);
+            padding: 0 8px;
+            white-space: nowrap;
+            position: absolute;
+        }
+
+        .separador {
+            flex: 1;
+            height: 1px;
+            background-color: grey;
+        }
+    }
+
+
+    .left {
+        max-width: 230px;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 10px;
+
+        .back {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            outline: none;
+            border: none;
+            color: rgb(63, 63, 63);
+            font-weight: 600;
+            font-size: 10px;
+            padding: 0;
+
+            img {
+                max-width: 15px;
+                max-height: 15px;
+                fill: var(--color-red);
+                margin-right: 5px;
+            }
+        }
+    }
+
+    .botoes {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        max-width: 200px;
+        margin-top: 20px;
+    }
+
+    .bloco {
+        opacity: 0;
+        transform: scale(0.95);
+        transition: all 0.2s ease;
+    }
+
+    .bloco.ativo {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

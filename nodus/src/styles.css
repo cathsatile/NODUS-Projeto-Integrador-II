@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+
+:root {
+    /* 🔥 Brand */
+    --color-red: #c3334b;
+    --color-red-dark: rgb(133, 28, 28);
+    --color-orange: #c7762f;
+    --color-yellow: #c6943d;
+    --color-brown: #2B1E1A;
+
+    /* 🎨 Background */
+    --color-bg: #F9FAFB;
+    --color-surface: #FFFFFF;
+
+    /* 📝 Text */
+    --color-text: #1F2937;
+    --color-text-secondary: #6B7280;
+
+    /* 🔲 UI */
+    --color-border: #E5E7EB;
+
+    /* 🚦 States */
+    --color-success: #4CAF50;
+    --color-error: #c3334b;
+    --color-warning: #c7762f;
+    --color-info: #0288D1;
+
+    /* 🌈 Gradiente (sua identidade visual) */
+    --gradient-color: linear-gradient(135deg, #c3334b, #c7762f, #c6943d);
+}

@@ -1,0 +1,30 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './login.html',
+  styleUrl: './login.css',
+})
+export class Login {
+  tipoBotao: '' | 'login' | 'cadastro' = '';
+
+  onInit() {
+    this.tipoBotao = '';
+  }
+
+  irParaLogin() {
+    this.tipoBotao = 'login';
+  }
+
+  irParaCadastro() {
+    this.tipoBotao = 'cadastro';
+  }
+  voltarBotoes() {
+    this.tipoBotao = '';
+  }
+
+
+}

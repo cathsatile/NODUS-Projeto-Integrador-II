@@ -1,0 +1,51 @@
+<div class="navbar-container">
+    <div class="navbar">
+
+        @if(usuario == 'psicologo'){
+        <ul>
+            <li>
+                <button>
+                    <img>
+                    Meus
+                </button>
+            </li>
+
+            <li>
+                <button>
+                    <img>
+                    Minha
+                </button>
+            </li>
+
+            <!-- <li>
+
+                </li>
+
+                <li>
+
+                </li> -->
+        </ul>
+        }
+
+        @if(usuario == 'paciente'){
+        <ul>
+            <li>
+                Meu Progresso
+            </li>
+
+            <li>
+                Minhas Sessões
+            </li>
+
+            <li>
+                Humor Diário
+            </li>
+
+            <li>
+                Minhas Tarefas
+            </li>
+        </ul>
+        }
+
+    </div>
+</div>
