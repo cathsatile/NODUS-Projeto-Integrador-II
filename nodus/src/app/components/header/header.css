@@ -8,7 +8,7 @@
         justify-content: left;
         align-items: center;
         flex-direction: row;
-        background-color: var(--color-brown);
+        background-color: white;
         height: 100%;
 
         .logo-titulo {
@@ -17,7 +17,9 @@
             justify-content: left;
             align-items: center;
             width: 100%;
-            color: #F5EDE6;
+            background: var(--gradient-color);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
 
 
             img {
@@ -43,20 +45,30 @@
         width: 100%;
 
         button {
-            text-align: left;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             width: auto;
-            background-color: var(--color-brown);
-            color: #EBC9A8;
+            background-color: white;
             border: none;
-            padding: 10px;
+            padding: 5px;
             border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
+            
+            img{
+                width: 20px;
+                height: 20px;
+            }
         }
 
         button:hover {
-            background-color: #4A3831;
+            background-color: #F0E9DB;
             cursor: pointer;
+
+            img{
+                 filter: brightness(0) saturate(100%) invert(40%) sepia(40%) saturate(400%) hue-rotate(10deg);
+            }
         }
 
     }
