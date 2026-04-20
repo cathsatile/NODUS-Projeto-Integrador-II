@@ -70,3 +70,23 @@ npm install --save-dev @types/crypto-js
 - **Commits**: Use o padrão feat:, fix:, ou docs:.
 - **Signals**: Proibido o uso de Variable = value para estados globais; use sempre signal().
 - **Modularização**: Lógica de banco e cálculos sempre nos Services; componentes devem apenas exibir dados.
+
+## 🔒 Estratégia de Backup e Validação (Zero-Knowledge)
+
+Implementamos um sistema de backup manual que garante a soberania dos dados ao profissional de saúde.
+
+### 1. Criptografia por Chave Manual (AES-256)
+- [cite_start]**Algoritmo**: Utilizamos o **AES-256** (Advanced Encryption Standard), o padrão ouro para dados clínicos e governamentais.
+- **Segurança Independente**: O backup é protegido por uma chave definida pelo usuário no momento da exportação. Sem essa senha, os dados no arquivo `.nodus` são ilegíveis, atendendo ao requisito de **Segurança Ética (RNF02)**.
+- **Eficiência de Tradução**: Os dados são serializados em JSON minificado antes da criptografia, garantindo arquivos leves e compatíveis com **Google Drive** e **iCloud**.
+
+### 2. Prova de Conceito (PoC)
+Para validar a integridade da recuperação de dados, o projeto inclui um script de teste que simula o ciclo completo de backup:
+- **Simulação**: Gera uma estrutura complexa contendo dados do Psicólogo e uma lista de múltiplos Pacientes (RF03, RF04).
+- **Criptografia e Escrita**: Gera o arquivo local criptografado.
+- **Restauração Detalhada**: O script descriptografa o arquivo e percorre toda a lista de pacientes, exibindo nomes, e-mails e notas clínicas para garantir que nenhum dado foi corrompido na tradução.
+
+**Como rodar o teste de validação:**
+~~~bash
+node poc-crypto.ts
+~~~
