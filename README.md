@@ -47,7 +47,7 @@ Motivo: Dados de saúde mental são ultra-sensíveis. A ética clínica exige pr
 **Instalação**
 
 1. Clone o repositório.
-2. Na pasta do projeto, rode:
+2. Na pasta root do projeto, e na pasta /backend, rode separadamente:
 
 ~~~Bash
 npm install
@@ -67,6 +67,6 @@ npm install --save-dev @types/crypto-js
 
 ## 📝 Regras de Contribuição (Git)
 
-- **Commits**: Use o padrão feat:, fix:, ou docs:.
+- **Commits**: Use o padrão feat:, fix:, ou docs:. Caso adicione dependências, se certifique que o node_modules está listado num .gitignore.
 - **Signals**: Proibido o uso de Variable = value para estados globais; use sempre signal().
 - **Modularização**: Lógica de banco e cálculos sempre nos Services; componentes devem apenas exibir dados.
