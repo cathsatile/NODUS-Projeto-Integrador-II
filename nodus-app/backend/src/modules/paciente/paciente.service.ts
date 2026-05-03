@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import * as repo from './paciente.repository';
 import { Paciente } from './paciente.model';
+import { removeByPaciente } from '../sessao/sessao.repository';
 
 export const getAll = () => repo.findAll();
 
@@ -18,4 +19,8 @@ export const create = async (data: Paciente) => {
 export const update = (id: number, data: Partial<Paciente>) =>
   repo.update(id, data);
 
-export const remove = (id: number) => repo.remove(id);
+export const remove = async (id: number) => {
+  // Deleta as sessões vinculadas antes de deletar o paciente
+  await removeByPaciente(id);
+  return repo.remove(id);
+};
