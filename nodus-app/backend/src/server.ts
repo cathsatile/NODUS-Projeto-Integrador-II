@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { psicologoRouter } from './modules/psicologo/psicologo.controller';
+import { pacienteRouter } from './modules/paciente/paciente.controller';
 
 dotenv.config();
 
@@ -15,3 +16,5 @@ const PORT = process.env.PORT ?? 3000;
 app.listen(PORT, () => {
   console.log(`SERVIDOR RODANDO!!!!!!!!! http://localhost:${PORT}`);
 });
+app.use('/api/psicologos', psicologoRouter);
+app.use('/api/pacientes', pacienteRouter);

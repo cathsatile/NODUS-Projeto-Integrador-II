@@ -59,7 +59,13 @@ psicologoRouter.delete('/:id', async (req: Request, res: Response) => {
     const deleted = await service.remove(Number(req.params.id));
     if (!deleted) return res.status(404).json({ error: 'Psicólogo não encontrado' });
     res.status(204).send();
-  } catch (err) {
+  } catch (err: any) {
+    console.error('Erro ao deletar psicólogo:', err);
+    if (err.message === 'PSICOLOGO_TEM_PACIENTES') {
+      return res.status(409).json({
+        error: 'Não é possível deletar um psicólogo com pacientes vinculados'
+      });
+    }
     res.status(500).json({ error: 'Erro ao deletar psicólogo' });
   }
 });

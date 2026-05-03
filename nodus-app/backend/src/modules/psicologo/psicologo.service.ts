@@ -7,6 +7,7 @@ a segurança da senha é garantida aqui porque o banco nunca vai recveber a senh
 
 import bcrypt from 'bcryptjs';
 import * as repo from './psicologo.repository';
+import { hasPacientes } from '../paciente/paciente.repository';
 import { Psicologo } from './psicologo.model';
 
 export const getAll = () => repo.findAll();
@@ -21,4 +22,10 @@ export const create = async (data: Psicologo) => {
 export const update = (id: number, data: Partial<Psicologo>) =>
   repo.update(id, data);
 
-export const remove = (id: number) => repo.remove(id);
+export const remove = async (id: number) => {
+  const temPacientes = await hasPacientes(id);
+  if (temPacientes) {
+    throw new Error('PSICOLOGO_TEM_PACIENTES');
+  }
+  return repo.remove(id);
+};
