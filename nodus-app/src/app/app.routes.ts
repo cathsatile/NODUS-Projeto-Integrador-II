@@ -1,12 +1,18 @@
 import { Routes } from '@angular/router';
-import { Navbar } from './components/navbar/navbar';
-import { Header } from './components/header/header';
 import { Login } from './pages/login/login';
-import { HomePage } from './pages/home-page/home-page';
+import { Principal } from './pages/principal.component';
 
 export const routes: Routes = [
-    {path: 'navbar', component: Navbar },
-    {path: 'header', component: Header},
+    {
+        path: 'principal',
+        component: Principal,
+        children :[
+            {
+                path: '',
+                loadChildren: () => import('./pages/principal.routes').then(m => m.PrincipalRoutes)
+            }
+        ]
+    },
     {path: 'login', component: Login},
-    {path: 'home', component: HomePage}
+    {path: '**', redirectTo: 'principal'}
 ];

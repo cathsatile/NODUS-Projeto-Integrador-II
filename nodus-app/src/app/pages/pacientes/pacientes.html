@@ -1,0 +1,41 @@
+<div class="pacientes-container">
+    <div class="header-container">
+        <div class="header-top">
+            <div class="info-pacientes">
+                <h1>Pacientes</h1>
+                <p>{{numPacientes}} pacientes ativos</p>
+            </div>
+            <button class="new-paciente">
+                <img src="assets/images/plus.svg">
+                Novo
+            </button>
+        </div>
+        <div class="header-bottom">
+            <img src="assets/images/search.svg">
+            <input placeholder="Buscar pacientes...">
+        </div>
+    </div>
+
+    <div class="pacientes-list">
+        <div class="paciente-card">
+            <div class="card-top">
+                <div class="left-info">
+                    <div class="profile-icon">
+                        {{iniciaisPaciente}}
+                    </div>
+                    <div class="info-card">
+                        <h2>{{nomePaciente}}</h2>
+                        <div class="sections">
+                            {{sessoesPaciente}} sessões
+                        </div>
+                    </div>
+                </div>
+                <img src="assets/images/arrow.svg">
+            </div>
+            <div class="card-bottom">
+                <img src="assets/images/calendar.svg">
+                Próxima: {{dataSessao | date:'dd/MM/yyyy'}} às {{horaSessao}}
+            </div>
+        </div>
+    </div>
+</div>

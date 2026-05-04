@@ -1,9 +1,9 @@
 .navbar-container {
-    display: flex;
-    justify-content: end;
-    align-items: end;
     position: fixed;
-    height: 100vh;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
 
     .navbar {
         display: flex;
@@ -43,8 +43,8 @@
                     background-color: white;
 
                     img{
-                        width: 30px;
-                        height: 30px;
+                        width: 25px;
+                        height: 25px;
                         filter: grayscale(100%);
                     }
                 }
