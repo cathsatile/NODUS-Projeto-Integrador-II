@@ -1,0 +1,30 @@
+<div class="sections-container">
+    <div class="section-header">
+        <div>
+            <h1>Sessões</h1>
+            {{numRealizadas}} realizadas - {{numCanceladas}} faltas
+        </div>
+        <button class="new-section">
+            <img src="assets/images/plus.svg">
+            Nova
+        </button>
+    </div>
+    <div class="section-options">
+    Adicionar Angular Material
+    </div>
+    <div class="sections-list">
+        <div class="profile-icon">
+            {{iniciaisPaciente}}
+        </div>
+        <div class="info-card">
+            <h2>{{nomePaciente}}</h2>
+            {{data | date:'dd/MM/yyyy HH:mm'}}
+        </div>
+        <div class="status-container">
+            <img src="assets/images/clock.svg">
+            <div class="status">
+                {{statusSessao}}
+            </div>
+        </div>
+    </div>
+</div>
