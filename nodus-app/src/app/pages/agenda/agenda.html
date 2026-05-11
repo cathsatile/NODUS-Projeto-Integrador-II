@@ -1,0 +1,28 @@
+<div class="agenda">
+    <div class="agenda-header">
+        <h1>Agenda</h1>
+        <button class="new-section">
+            <img src="assets/images/plus.svg">
+            Nova sessão
+        </button>
+    </div>
+
+    <div class="calendar">
+        <mat-card class="demo-inline-calendar-card">
+            <mat-calendar [(selected)]="selected"></mat-calendar>
+        </mat-card>
+        <p>Selected date: {{selected}}</p>
+    </div>
+
+    <div class="section-container">
+        A(s) sessão(ões) em {{hoje | date:'dd/MM/yyyy'}}
+        <div class="section-card">
+            <img class="clock-icon" src="assets/images/clock.svg">
+            Nenhuma sessão neste dia
+            <button class="new-section">
+                <img src="assets/images/plus.svg">
+                Agendar sessão
+            </button>
+        </div>
+    </div>
+</div>

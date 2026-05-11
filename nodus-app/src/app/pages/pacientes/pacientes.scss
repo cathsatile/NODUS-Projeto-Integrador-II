@@ -1,0 +1,173 @@
+.pacientes-container {
+    height: fit-content;
+    inset: 0;
+    padding: 80px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+    font-family: 'DM Sans', sans-serif;
+    background-color: rgb(236, 236, 236);
+
+    img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .header-container {
+        display: flex;
+        flex-direction: column;
+        max-width: 480px;
+        width: 100%;
+        gap: 20px;
+
+        .header-top {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+
+            .info-pacientes {
+                display: flex;
+                flex-direction: column;
+                justify-content: left;
+                align-items: left;
+                gap: 10px;
+                padding: 10px;
+
+                h1,
+                p {
+                    margin: 0;
+                }
+            }
+
+            .new-paciente {
+                border-radius: 10px;
+                border: none;
+                outline: none;
+                background: var(--gradient-color);
+                white-space: nowrap;
+                color: white;
+                cursor: pointer;
+                padding: 10px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 10px;
+
+                img {
+                    filter: brightness(0) invert(1);
+                }
+            }
+        }
+
+        .header-bottom {
+            display: flex;
+            justify-content: left;
+            align-items: center;
+            width: 95%;
+            background-color: white;
+            border-radius: 10px;
+            padding: 10px;
+            gap: 10px;
+
+            img {
+                padding: 5px;
+            }
+
+            input {
+                outline: none;
+                border: none;
+            }
+        }
+    }
+
+    .pacientes-list {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        max-width: 480px;
+
+        .paciente-card {
+            display: flex;
+            flex-direction: column;
+            width: 95%;
+            background-color: white;
+            border: solid 1px rgb(235, 235, 235);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            gap: 10px;
+
+            .card-top {
+                width: 100%;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+
+                .left-info {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 10px;
+                    justify-content: center;
+                    align-items: center;
+
+                    .profile-icon {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 50px;
+                        background-color: #fedce2;
+                        padding: 15px;
+                        font-weight: 600;
+                        color: var(--color-red);
+                        border: solid 1px var(--color-red);
+                        width: 35px;
+                        height: 35px;
+                        font-size: 20px;
+                    }
+
+                    .info-card {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: left;
+                        gap: 10px;
+
+                        h2 {
+                            margin: 0;
+                        }
+
+                        .section {
+                            margin: 0;
+                        }
+
+                    }
+
+                }
+
+                img {}
+            }
+
+            .card-bottom {
+                display: flex;
+                justify-content: left;
+                align-items: left;
+                gap: 5px;
+                background-color: rgb(245, 245, 245);
+                border: solid 1px rgb(209, 209, 209);
+                padding: 10px;
+                border-radius: 10px;
+
+                img {}
+            }
+        }
+
+    }
+}
