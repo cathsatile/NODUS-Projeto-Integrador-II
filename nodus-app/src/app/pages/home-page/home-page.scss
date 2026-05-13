@@ -156,26 +156,27 @@
         max-width: 480px;
         width: 100%;
         gap: 10px;
-        
+
         .next-header {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            
+
             button {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 gap: 10px;
                 color: var(--color-red);
-                img{
+
+                img {
                     filter: brightness(0) saturate(100%) invert(23%) sepia(94%) saturate(2194%) hue-rotate(331deg) brightness(89%) contrast(94%);
                 }
             }
         }
-        
+
         .next-container {
             display: flex;
             flex-direction: column;
@@ -198,5 +199,18 @@
         }
 
 
+    }
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+
+        background-color: rgba(0, 0, 0, 0.3);
+
+        display: flex;
+        justify-content: center;
+        align-items: end;
+
+        z-index: 999;
     }
 }

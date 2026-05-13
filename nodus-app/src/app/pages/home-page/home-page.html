@@ -32,21 +32,21 @@
         </div>
 
         <div class="line">
-            <button class="line-card special1">
+            <button class="line-card special1" (click)="openModal('sessao')">
                 <img src="assets/images/plus.svg">
                 Nova Sessão
             </button>
-            <button class="line-card special2">
+            <button class="line-card special2" (click)="openModal('paciente')">
                 <img src="assets/images/people.svg">
                 Novo Paciente
             </button>
         </div>
     </section>
-    
+
     <section class="next-section">
         <div class="next-header">
             <span>Próximas sessões</span>
-            <button>
+            <button (click)="goToSections()">
                 <span class="view-button">Ver todas </span>
                 <img src="assets/images/arrow.svg">
             </button>
@@ -62,4 +62,9 @@
 
 
     </section>
+    @if(popupAberto){
+        <div class="overlay">
+            <app-add-section-paciente new="sessao"></app-add-section-paciente>
+        </div>
+    }
 </div>
