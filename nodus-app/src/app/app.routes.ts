@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Login } from './pages/login/login';
 import { Principal } from './pages/principal.component';
+import { AddSectionPaciente } from './components/add-section-paciente/add-section-paciente';
 
 export const routes: Routes = [
     {

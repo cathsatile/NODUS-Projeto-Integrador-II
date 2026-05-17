@@ -1,8 +1,11 @@
 <div class="sections-container">
     <div class="section-header">
-        <div>
+        <div class="texts">
             <h1>Sessões</h1>
-            {{numRealizadas}} realizadas - {{numCanceladas}} faltas
+            <div class="text-counter">
+                <strong>{{numRealizadas}}</strong><span> realizadas - </span>
+                <strong>{{numCanceladas}} </strong><span> faltas </span>
+            </div>
         </div>
         <button class="new-section">
             <img src="assets/images/plus.svg">
@@ -10,20 +13,29 @@
         </button>
     </div>
     <div class="section-options">
-    Adicionar Angular Material
+        <mat-tab-group mat-stretch-tabs="false">
+            <mat-tab [label]="'Todas ('+ todasSessoes +')'">Content 1</mat-tab>
+            <mat-tab [label]="'Realizadas ('+ numRealizadas +')'">Content 2</mat-tab>
+            <mat-tab [label]="'Agendadas ('+ numAgendadas +')'">Content 3</mat-tab>
+            <mat-tab [label]="'Canceladas ('+ numCanceladas +')'">Content 3</mat-tab>
+        </mat-tab-group>
     </div>
     <div class="sections-list">
-        <div class="profile-icon">
-            {{iniciaisPaciente}}
-        </div>
-        <div class="info-card">
-            <h2>{{nomePaciente}}</h2>
-            {{data | date:'dd/MM/yyyy HH:mm'}}
-        </div>
-        <div class="status-container">
-            <img src="assets/images/clock.svg">
-            <div class="status">
-                {{statusSessao}}
+        <div class="section-card">
+            <div class="left-container">
+                <div class="profile-icon">
+                    {{iniciaisPaciente}}
+                </div>
+                <div class="info-card">
+                    <h2>{{nomePaciente}}</h2>
+                    {{data | date:'dd/MM/yyyy HH:mm'}}
+                </div>
+            </div>
+            <div class="status-container">
+                <img src="assets/images/clock.svg">
+                <div class="status">
+                    {{statusSessao}}
+                </div>
             </div>
         </div>
     </div>
