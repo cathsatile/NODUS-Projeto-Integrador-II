@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { Paciente, CriarPacienteDto } from './paciente.model';
+import { Paciente } from './paciente.model';
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +29,7 @@ export class PacienteService {
     );
   }
 
-  create(data: CriarPacienteDto): Observable<Paciente> {
+  create(data: Paciente): Observable<Paciente> {
     return this.http.post<Paciente>(this.apiUrl, data).pipe(
       tap(novo => this.pacientes.update(lista => [...lista, novo]))
     );
