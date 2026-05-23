@@ -28,74 +28,87 @@
     }
 
     @if(tipoBotao == 'login'){
-    <div class="bloco login-cadastro " [class.ativo]="tipoBotao == 'login'">
+    <div class="bloco login-cadastro" [class.ativo]="tipoBotao == 'login'">
         <div class="left">
             <button class="back" (click)="voltarBotoes()">
                 <img src="assets/images/back_arrow.svg">
-                VOLTAR</button>
+                VOLTAR
+            </button>
         </div>
         <form [formGroup]="loginForm" (ngSubmit)="fazerLogin()">
             <div class="input-container">
                 <label class="title-input">EMAIL</label>
-                <input class="input" type="email" placeholder="seu@email.com" required
-                formControlName="email">
+                <input class="input" type="email" placeholder="seu@email.com"
+                    formControlName="email" autocomplete="email">
             </div>
 
             <div class="input-container">
                 <label class="title-input">SENHA</label>
-                <input class="input" type="password" placeholder="*******" required
-                formControlName="senha">
+                <input class="input" type="password" placeholder="*******"
+                    formControlName="senha" autocomplete="current-password">
             </div>
 
-            <button class="input-button" type="submit">
-                Entrar
+            @if(erro()) {
+                <p class="erro">{{ erro() }}</p>
+            }
+
+            <button class="input-button" type="submit" [disabled]="loading()">
+                {{ loading() ? 'Entrando...' : 'Entrar' }}
             </button>
         </form>
     </div>
     }
 
     @if(tipoBotao == 'cadastro'){
-    <div class="bloco login-cadastro " [class.ativo]="tipoBotao == 'cadastro'">
+    <div class="bloco login-cadastro" [class.ativo]="tipoBotao == 'cadastro'">
         <div class="left">
             <button class="back" (click)="voltarBotoes()">
                 <img src="assets/images/back_arrow.svg">
-                VOLTAR</button>
+                VOLTAR
+            </button>
         </div>
         <form [formGroup]="cadastroForm" (ngSubmit)="fazerCadastro()">
             <div class="input-container">
                 <label class="title-input">NOME</label>
-                <input class="input" type="text" placeholder="Seu nome" required
-                formControlName="nome">
+                <input class="input" type="text" placeholder="Seu nome"
+                    formControlName="nome" autocomplete="name">
             </div>
             <div class="input-container">
                 <label class="title-input">EMAIL</label>
-                <input class="input" type="email" placeholder="seu@email.com" required
-                formControlName="email">
+                <input class="input" type="email" placeholder="seu@email.com"
+                    formControlName="email" autocomplete="email">
             </div>
             <div class="input-container">
                 <label class="title-input">CRP</label>
-                <input class="input" type="numbetr" placeholder="Seu CRP" required
-                formControlName="crp">
+                <input class="input" type="text" placeholder="Ex: 06/12345"
+                    formControlName="registro_profissional">
             </div>
-
             <div class="input-container">
                 <label class="title-input">TELEFONE</label>
-                <input class="input" type="text" placeholder="Telefone (opicional)"
-                formControlName="telefone">
+                <input class="input" type="text" placeholder="Telefone (opcional)"
+                    formControlName="telefone" autocomplete="tel">
             </div>
             <div class="input-container">
                 <label class="title-input">SENHA</label>
-                <input class="input" type="password" placeholder="*******" required
-                formControlName="senha">
+                <input class="input" type="password" placeholder="Mínimo 6 caracteres"
+                    formControlName="senha" autocomplete="new-password">
             </div>
             <div class="input-container">
                 <label class="title-input">CONFIRMAR SENHA</label>
-                <input class="input" type="password" placeholder="*******" required
-                formControlName="confirmar_senha">
+                <input class="input" type="password" placeholder="*******"
+                    formControlName="confirmar_senha" autocomplete="new-password">
             </div>
 
-            <button class="input-button" type="submit">
-                Cadastrar
+            @if(cadastroForm.errors?.['senhaDiferente'] && cadastroForm.touched) {
+                <p class="erro">As senhas não coincidem.</p>
+            }
+
+            @if(erro()) {
+                <p class="erro">{{ erro() }}</p>
+            }
+
+            <button class="input-button" type="submit" [disabled]="loading()">
+                {{ loading() ? 'Criando conta...' : 'Cadastrar' }}
             </button>
         </form>
     </div>

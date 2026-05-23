@@ -53,3 +53,12 @@ export const remove = async (id: number): Promise<boolean> => {
   );
   return (result.rowCount ?? 0) > 0;
 };
+
+// inclui senha para comparação no fluxo de autenticação — não usar em outras queries
+export const findByEmail = async (email: string): Promise<Psicologo | null> => {
+  const result = await pool.query(
+    'SELECT id_psicologo, nome, email, senha, registro_profissional FROM psicologo WHERE email = $1',
+    [email]
+  );
+  return result.rows[0] ?? null;
+};
