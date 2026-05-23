@@ -1,6 +1,7 @@
 export interface Sessao {
   id_sessao?: number;
-  data: string; // "YYYY-MM-DDTHH:mm:ss"
+  data: string;
+  horario: string;
   observacoes?: string;
   id_paciente: number;
   id_psicologo: number;
@@ -8,6 +9,7 @@ export interface Sessao {
 
 export interface CriarSessaoDto {
   data: string;
+  horario: string;
   observacoes?: string;
   id_paciente: number;
   id_psicologo: number;

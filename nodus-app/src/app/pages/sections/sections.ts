@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-sections',
-  imports: [DatePipe],
+  imports: [DatePipe, MatTabsModule],
   templateUrl: './sections.html',
   styleUrl: './sections.scss',
 })
@@ -16,4 +17,5 @@ export class Sections {
   numRealizadas = 6;
   numAgendadas = 5;
   numCanceladas = 1;
+
 }

@@ -1,7 +1,6 @@
-import bcrypt from 'bcryptjs';
 import * as repo from './paciente.repository';
-import { Paciente } from './paciente.model';
 import { removeByPaciente } from '../sessao/sessao.repository';
+import { Paciente } from './paciente.model';
 
 export const getAll = () => repo.findAll();
 
@@ -12,15 +11,13 @@ export const getByPsicologo = (id_psicologo: number) =>
 
 export const create = async (data: Paciente) => {
   if (!data.email) throw new Error('Email é obrigatório');
-  const senhaHash = await bcrypt.hash(data.senha, 10);
-  return repo.create({ ...data, senha: senhaHash });
+  return repo.create(data);
 };
 
 export const update = (id: number, data: Partial<Paciente>) =>
   repo.update(id, data);
 
 export const remove = async (id: number) => {
-  // Deleta as sessões vinculadas antes de deletar o paciente
   await removeByPaciente(id);
   return repo.remove(id);
 };
