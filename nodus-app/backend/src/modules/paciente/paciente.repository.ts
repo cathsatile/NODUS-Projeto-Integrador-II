@@ -1,18 +1,16 @@
 import { pool } from '../../database/db';
 import { Paciente } from './paciente.model';
 
+const COLUNAS = `id_paciente, nome, email, data_nascimento, id_psicologo`;
+
 export const findAll = async (): Promise<Paciente[]> => {
-  const result = await pool.query(
-    `SELECT id_paciente, nome, email, telefone, data_nascimento, id_psicologo
-     FROM paciente`
-  );
+  const result = await pool.query(`SELECT ${COLUNAS} FROM paciente`);
   return result.rows;
 };
 
 export const findById = async (id: number): Promise<Paciente | null> => {
   const result = await pool.query(
-    `SELECT id_paciente, nome, email, telefone, data_nascimento, id_psicologo
-     FROM paciente WHERE id_paciente = $1`,
+    `SELECT ${COLUNAS} FROM paciente WHERE id_paciente = $1`,
     [id]
   );
   return result.rows[0] ?? null;
@@ -20,8 +18,7 @@ export const findById = async (id: number): Promise<Paciente | null> => {
 
 export const findByPsicologo = async (id_psicologo: number): Promise<Paciente[]> => {
   const result = await pool.query(
-    `SELECT id_paciente, nome, email, telefone, data_nascimento, id_psicologo
-     FROM paciente WHERE id_psicologo = $1`,
+    `SELECT ${COLUNAS} FROM paciente WHERE id_psicologo = $1`,
     [id_psicologo]
   );
   return result.rows;
@@ -29,10 +26,10 @@ export const findByPsicologo = async (id_psicologo: number): Promise<Paciente[]>
 
 export const create = async (data: Paciente): Promise<Paciente> => {
   const result = await pool.query(
-    `INSERT INTO paciente (nome, email, telefone, data_nascimento, id_psicologo)
+    `INSERT INTO paciente (nome, email, senha, data_nascimento, id_psicologo)
      VALUES ($1, $2, $3, $4, $5)
-     RETURNING id_paciente, nome, email, telefone, data_nascimento, id_psicologo`,
-    [data.nome, data.email, data.telefone ?? null, data.data_nascimento, data.id_psicologo]
+     RETURNING ${COLUNAS}`,
+    [data.nome, data.email, data.senha, data.data_nascimento, data.id_psicologo]
   );
   return result.rows[0];
 };
@@ -40,14 +37,13 @@ export const create = async (data: Paciente): Promise<Paciente> => {
 export const update = async (id: number, data: Partial<Paciente>): Promise<Paciente | null> => {
   const result = await pool.query(
     `UPDATE paciente
-     SET nome = COALESCE($1, nome),
-         email = COALESCE($2, email),
-         telefone = COALESCE($3, telefone),
-         data_nascimento = COALESCE($4, data_nascimento),
-         id_psicologo = COALESCE($5, id_psicologo)
-     WHERE id_paciente = $6
-     RETURNING id_paciente, nome, email, telefone, data_nascimento, id_psicologo`,
-    [data.nome, data.email, data.telefone, data.data_nascimento, data.id_psicologo, id]
+     SET nome            = COALESCE($1, nome),
+         email           = COALESCE($2, email),
+         data_nascimento = COALESCE($3, data_nascimento),
+         id_psicologo    = COALESCE($4, id_psicologo)
+     WHERE id_paciente = $5
+     RETURNING ${COLUNAS}`,
+    [data.nome, data.email, data.data_nascimento, data.id_psicologo, id]
   );
   return result.rows[0] ?? null;
 };
