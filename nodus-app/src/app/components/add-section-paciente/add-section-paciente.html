@@ -1,9 +1,10 @@
 <div class="new-card">
-    @if(data.add == 'paciente'){
+    @if (data.add === 'paciente') {
     <div class="new-container">
         <button class="close-button" mat-button mat-dialog-close>
             <img class="close" src="assets/images/close.svg">
         </button>
+
         <div class="text-container">
             <div class="top-text">
                 <img src="assets/images/new-pacient.png">
@@ -11,42 +12,72 @@
             </div>
             <span>Preencha os dados do paciente</span>
         </div>
-        <form class="forms" (ngSubmit)="salvarPaciente()">
-            <div class="input-container">
-                <label>Nome Completo:</label>
-                <input class="input" type="text" placeholder="Nome do paciente">
-            </div>
-            <div class="row">
-                <div class="input-container">
-                    <label>Telefone:</label>
-                    <input class="input" type="tel" placeholder="(00) 00000-0000">
-                </div>
-                <div class="input-container">
-                    <label>Data de Nasc.:</label>
-                    <input class="input" type="text">
-                </div>
 
-            </div>
-            <div class="input-container">
-                <label>Email:</label>
-                <input class="input" type="email" placeholder="email@exemplo.com">
-            </div>
-            <div class="input-container">
-                <label>Observações:</label>
-                <input class="input" type="text" placeholder="Queixa principal, histórico relevante...">
-            </div>
-            <button class="submit-button" type="submit">
-                Cadastrar Paciente
-            </button>
-        </form>
+        @if (erro()) {
+            <p class="erro">{{erro()}}</p>
+        }
+
+        <mat-stepper [linear]="true" class="stepper">
+            <mat-step [stepControl]="dadosPessoaisForm" label="Dados Pessoais">
+                <form [formGroup]="dadosPessoaisForm" class="forms">
+                    <div class="input-container">
+                        <label>Nome Completo:</label>
+                        <input class="input" type="text" formControlName="nome" placeholder="Nome do paciente">
+                    </div>
+                    <div class="row">
+                        <div class="input-container">
+                            <label>Telefone:</label>
+                            <input class="input" type="tel" formControlName="telefone" placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="input-container">
+                            <label>Data de Nasc.:</label>
+                            <input class="input" type="date" formControlName="data_nascimento">
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button mat-button matStepperNext type="button" [disabled]="dadosPessoaisForm.invalid">
+                            Próximo
+                        </button>
+                    </div>
+                </form>
+            </mat-step>
+
+            <mat-step [stepControl]="dadosAcessoForm" label="Acesso">
+                <form [formGroup]="dadosAcessoForm" class="forms" (ngSubmit)="salvarPaciente()">
+                    <div class="input-container">
+                        <label>Email:</label>
+                        <input class="input" type="email" formControlName="email" placeholder="email@exemplo.com">
+                    </div>
+                    <div class="input-container">
+                        <label>Senha:</label>
+                        <input class="input" type="password" formControlName="senha" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="input-container">
+                        <label>Confirmar Senha:</label>
+                        <input class="input" type="password" formControlName="confirmarSenha" placeholder="Repita a senha">
+                        @if (dadosAcessoForm.hasError('senhasDiferentes') && dadosAcessoForm.get('confirmarSenha')?.touched) {
+                            <span class="erro-campo">Senhas não coincidem</span>
+                        }
+                    </div>
+                    <div class="step-actions">
+                        <button mat-button matStepperPrevious type="button">Voltar</button>
+                        <button class="submit-button" type="submit"
+                            [disabled]="dadosAcessoForm.invalid || loading()">
+                            {{ loading() ? 'Salvando...' : 'Cadastrar Paciente' }}
+                        </button>
+                    </div>
+                </form>
+            </mat-step>
+        </mat-stepper>
     </div>
     }
 
-    @if(data.add == 'sessao'){
+    @if (data.add === 'sessao') {
     <div class="new-container">
         <button class="close-button" mat-button mat-dialog-close>
             <img class="close" src="assets/images/close.svg">
         </button>
+
         <div class="text-container">
             <div class="top-text">
                 <img src="assets/images/new-section.png">
@@ -54,59 +85,38 @@
             </div>
             <span>Agende uma sessão para um paciente</span>
         </div>
-        <form class="forms" (ngSubmit)="salvarSessao()">
-            <div class="input-container">
-                <label for="paciente">Paciente:</label>
 
-                <select id="paciente" class="input" [(ngModel)]="pacienteSelecionado">
-                    <option value="">
-                        -
-                    </option>
-                    @for (paciente of pacienteList; track paciente.id) {
-                    <option [value]="paciente.id">
-                        {{ paciente.nome }}
-                    </option>
+        @if (erro()) {
+            <p class="erro">{{erro()}}</p>
+        }
+
+        <form [formGroup]="sessaoForm" class="forms" (ngSubmit)="salvarSessao()">
+            <div class="input-container">
+                <label>Paciente:</label>
+                <select class="input" formControlName="id_paciente">
+                    <option [ngValue]="null">-</option>
+                    @for (paciente of pacientes(); track paciente.id_paciente) {
+                        <option [ngValue]="paciente.id_paciente">{{ paciente.nome }}</option>
                     }
                 </select>
             </div>
             <div class="row">
                 <div class="input-container">
                     <label>Data:</label>
-                    <input class="input" type="date">
+                    <input class="input" type="date" formControlName="data">
                 </div>
                 <div class="input-container">
                     <label>Horário:</label>
-                    <input class="input" type="time">
-                </div>
-            </div>
-            <div class="row">
-                <div class="input-container">
-                    <label>Duração (min):</label>
-                    <input class="input" type="number">
-                </div>
-                <div class="input-container">
-                    <label for="humor">Humor:</label>
-
-                    <select id="humor" class="input" [(ngModel)]="humorSelecionado">
-                        <option value="">-</option>
-                        <option value="1">😢 Muito Mal</option>
-                        <option value="2">😟 Mal</option>
-                        <option value="3">😐 Neutro</option>
-                        <option value="4">😊 Bem</option>
-                        <option value="5">😆 Muito Bem</option>
-                    </select>
+                    <input class="input" type="time" formControlName="horario">
                 </div>
             </div>
             <div class="input-container">
-                <label>Temas Abordados:</label>
-                <input class="input" type="text" placeholder="Ansiedade, sono, trabalho...">
+                <label>Observações:</label>
+                <input class="input" type="text" formControlName="observacoes"
+                    placeholder="Temas, evolução, exercícios propostos...">
             </div>
-            <div class="input-container">
-                <label>Nota de sessão:</label>
-                <input class="input" type="text" placeholder="Observações, evolução, exercícios propostos...">
-            </div>
-            <button class="submit-button" type="submit">
-                Agendar Sessão
+            <button class="submit-button" type="submit" [disabled]="sessaoForm.invalid || loading()">
+                {{ loading() ? 'Salvando...' : 'Agendar Sessão' }}
             </button>
         </form>
     </div>

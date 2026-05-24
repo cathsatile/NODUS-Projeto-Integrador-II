@@ -1,1 +1,28 @@
-<p>psicologo-profile works!</p>
+@if (psicologo(); as psi) {
+<div class="profile-container">
+    <div class="profile-avatar">
+        {{ iniciais() }}
+    </div>
+
+    <div class="profile-info">
+        <h1 class="profile-nome">{{ psi.nome }}</h1>
+        <span class="profile-registro">CRP {{ psi.registro_profissional }}</span>
+    </div>
+
+    <div class="profile-details">
+        <div class="detail-item">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ psi.email }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Registro Profissional</span>
+            <span class="detail-value">{{ psi.registro_profissional }}</span>
+        </div>
+    </div>
+
+    <button class="logout-button" (click)="logout()">
+        <img src="assets/images/sign-out.svg">
+        Sair da conta
+    </button>
+</div>
+}
