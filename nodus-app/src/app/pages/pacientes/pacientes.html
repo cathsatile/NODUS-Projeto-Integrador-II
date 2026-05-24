@@ -3,7 +3,7 @@
         <div class="header-top">
             <div class="info-pacientes">
                 <h1>Pacientes</h1>
-                <p>{{numPacientes}} pacientes ativos</p>
+                <p>{{numPacientes()}} pacientes ativos</p>
             </div>
             <button class="new-paciente">
                 <img src="assets/images/plus.svg">
@@ -17,25 +17,32 @@
     </div>
 
     <div class="pacientes-list">
-        <div class="paciente-card">
-            <div class="card-top">
-                <div class="left-info">
-                    <div class="profile-icon">
-                        {{iniciaisPaciente}}
-                    </div>
-                    <div class="info-card">
-                        <h2>{{nomePaciente}}</h2>
-                        <div class="sections">
-                            {{sessoesPaciente}} sessões
+        @for (paciente of pacienteService.pacientes(); track paciente.id_paciente) {
+            <div class="paciente-card">
+                <div class="card-top">
+                    <div class="left-info">
+                        <div class="profile-icon">
+                            {{ iniciaisDe(paciente.nome) }}
+                        </div>
+                        <div class="info-card">
+                            <h2>{{paciente.nome}}</h2>
+                            <div class="sections">
+                                {{paciente.email}}
+                            </div>
                         </div>
                     </div>
+                    <img src="assets/images/arrow.svg">
                 </div>
-                <img src="assets/images/arrow.svg">
+                <div class="card-bottom">
+                    <img src="assets/images/calendar.svg">
+                    Nascimento: {{paciente.data_nascimento | date:'dd/MM/yyyy'}}
+                </div>
             </div>
-            <div class="card-bottom">
-                <img src="assets/images/calendar.svg">
-                Próxima: {{dataSessao | date:'dd/MM/yyyy'}} às {{horaSessao}}
+        } @empty {
+            <div class="next-container">
+                <img src="assets/images/people.svg">
+                <span>Nenhum paciente cadastrado</span>
             </div>
-        </div>
+        }
     </div>
 </div>
