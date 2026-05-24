@@ -1,8 +1,3 @@
-/*esse arquivo que conecta com o banco.
-pg é a biblioteca que faz o postgres funcionar com o node
-pool deixa comunicação com o DB ter varias requisiçoes simultaneas
-dotenv lê o .env 
-*/
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
@@ -15,3 +10,10 @@ export const pool = new Pool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
 });
+
+// Garante que a coluna horario existe na tabela sessao
+// (o schema original não a incluía)
+pool.query(`
+    ALTER TABLE sessao
+    ADD COLUMN IF NOT EXISTS horario VARCHAR(10);
+`).catch(err => console.error('[db] Erro ao aplicar migration de horario:', err));

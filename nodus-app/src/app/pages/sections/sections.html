@@ -3,40 +3,87 @@
         <div class="texts">
             <h1>Sessões</h1>
             <div class="text-counter">
-                <strong>{{numRealizadas}}</strong><span> realizadas - </span>
-                <strong>{{numCanceladas}} </strong><span> faltas </span>
+                <strong>{{totalRealizadas()}}</strong><span> realizadas - </span>
+                <strong>{{totalAgendadas()}}</strong><span> agendadas</span>
             </div>
         </div>
-        <button class="new-section">
+        <button class="new-section" (click)="openModal()">
             <img src="assets/images/plus.svg">
             Nova
         </button>
     </div>
+
     <div class="section-options">
         <mat-tab-group mat-stretch-tabs="false">
-            <mat-tab [label]="'Todas ('+ todasSessoes +')'">Content 1</mat-tab>
-            <mat-tab [label]="'Realizadas ('+ numRealizadas +')'">Content 2</mat-tab>
-            <mat-tab [label]="'Agendadas ('+ numAgendadas +')'">Content 3</mat-tab>
-            <mat-tab [label]="'Canceladas ('+ numCanceladas +')'">Content 3</mat-tab>
+
+            <mat-tab [label]="'Todas (' + totalTodas() + ')'">
+                <div class="sections-list">
+                    @for (sessao of todasVisiveis(); track sessao.id_sessao) {
+                        <ng-container *ngTemplateOutlet="cardSessao; context: { sessao }"></ng-container>
+                    } @empty {
+                        <div class="empty-state">
+                            <img src="assets/images/calendar.svg">
+                            <span>Nenhuma sessão registrada</span>
+                        </div>
+                    }
+                    @if (temMaisAll()) {
+                        <button class="ver-mais" (click)="verMais('all')">Ver mais</button>
+                    }
+                </div>
+            </mat-tab>
+
+            <mat-tab [label]="'Realizadas (' + totalRealizadas() + ')'">
+                <div class="sections-list">
+                    @for (sessao of realizadasVisiveis(); track sessao.id_sessao) {
+                        <ng-container *ngTemplateOutlet="cardSessao; context: { sessao }"></ng-container>
+                    } @empty {
+                        <div class="empty-state">
+                            <img src="assets/images/calendar.svg">
+                            <span>Nenhuma sessão realizada</span>
+                        </div>
+                    }
+                    @if (temMaisDone()) {
+                        <button class="ver-mais" (click)="verMais('done')">Ver mais</button>
+                    }
+                </div>
+            </mat-tab>
+
+            <mat-tab [label]="'Agendadas (' + totalAgendadas() + ')'">
+                <div class="sections-list">
+                    @for (sessao of agendadasVisiveis(); track sessao.id_sessao) {
+                        <ng-container *ngTemplateOutlet="cardSessao; context: { sessao }"></ng-container>
+                    } @empty {
+                        <div class="empty-state">
+                            <img src="assets/images/calendar.svg">
+                            <span>Nenhuma sessão agendada</span>
+                        </div>
+                    }
+                    @if (temMaisScheduled()) {
+                        <button class="ver-mais" (click)="verMais('scheduled')">Ver mais</button>
+                    }
+                </div>
+            </mat-tab>
+
         </mat-tab-group>
     </div>
-    <div class="sections-list">
-        <div class="section-card">
-            <div class="left-container">
-                <div class="profile-icon">
-                    {{iniciaisPaciente}}
-                </div>
-                <div class="info-card">
-                    <h2>{{nomePaciente}}</h2>
-                    {{data | date:'dd/MM/yyyy HH:mm'}}
-                </div>
+</div>
+
+<ng-template #cardSessao let-sessao="sessao">
+    <div class="section-card">
+        <div class="left-container">
+            <div class="profile-icon">
+                {{ iniciaisDe(nomePaciente(sessao.id_paciente)) }}
             </div>
-            <div class="status-container">
-                <img src="assets/images/clock.svg">
-                <div class="status">
-                    {{statusSessao}}
-                </div>
+            <div class="info-card">
+                <h2>{{ nomePaciente(sessao.id_paciente) }}</h2>
+                {{ sessao.data | date:'dd/MM/yyyy' }} às {{ sessao.horario }}
+            </div>
+        </div>
+        <div class="status-container">
+            <img src="assets/images/clock.svg">
+            <div class="status" [class.status-agendada]="statusDe(sessao) === 'Agendada'">
+                {{ statusDe(sessao) }}
             </div>
         </div>
     </div>
-</div>
+</ng-template>

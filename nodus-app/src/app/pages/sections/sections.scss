@@ -142,7 +142,7 @@
 
     .sections-list {
         display: flex;
-        flex-direction: rocolumnw;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         max-width: 480px;
@@ -222,9 +222,48 @@
                     padding: 0px 10px;
                     border: solid 1px grey;
                     border-radius: 10px;
+                    color: grey;
+                    font-size: 12px;
+
+                    &.status-agendada {
+                        border-color: var(--color-yellow, #f5a623);
+                        color: var(--color-yellow, #f5a623);
+                    }
                 }
             }
         }
 
+    }
+
+    .ver-mais {
+        width: 100%;
+        max-width: 480px;
+        padding: 12px;
+        margin-top: 4px;
+        border-radius: 10px;
+        border: 1.5px solid var(--color-red, #c3334b);
+        background: transparent;
+        color: var(--color-red, #c3334b);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 40px 20px;
+        color: grey;
+        font-size: 14px;
+
+        img {
+            height: 32px;
+            width: 32px;
+            opacity: 0.4;
+        }
     }
 }

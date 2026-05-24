@@ -5,16 +5,19 @@ import * as CryptoJS from 'crypto-js';
   providedIn: 'root'
 })
 export class CryptoService {
-  private readonly secretKey = 'CHAVE_MESTR_NODUS_2026'; // Em produção, use variáveis de ambiente
 
-  // Criptografa strings (ex: notas de sessão, observações) 
-  encrypt(data: string): string {
-    return CryptoJS.AES.encrypt(data, this.secretKey).toString();
+  encrypt(data: string, chave: string): string {
+    return CryptoJS.AES.encrypt(data, chave).toString();
   }
 
-  // Descriptografa para exibição no sistema 
-  decrypt(ciphertext: string): string {
-    const bytes = CryptoJS.AES.decrypt(ciphertext, this.secretKey);
-    return bytes.toString(CryptoJS.enc.Utf8);
+  // Retorna o texto original se não conseguir decifrar (dados ainda não criptografados)
+  decrypt(ciphertext: string, chave: string): string {
+    try {
+      const bytes = CryptoJS.AES.decrypt(ciphertext, chave);
+      const resultado = bytes.toString(CryptoJS.enc.Utf8);
+      return resultado || ciphertext;
+    } catch {
+      return ciphertext;
+    }
   }
 }
