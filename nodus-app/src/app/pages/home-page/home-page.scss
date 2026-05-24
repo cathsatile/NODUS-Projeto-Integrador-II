@@ -201,6 +201,37 @@
 
     }
 
+    .chart-section {
+        display: flex;
+        flex-direction: column;
+        max-width: 480px;
+        width: 100%;
+        gap: 10px;
+
+        .chart-wrapper {
+            background-color: white;
+            border-radius: 15px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            canvas {
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            .chart-empty {
+                font-size: 13px;
+                color: #a08e87;
+                text-align: center;
+                margin: 0;
+            }
+        }
+    }
+
     .overlay {
         position: fixed;
         inset: 0;

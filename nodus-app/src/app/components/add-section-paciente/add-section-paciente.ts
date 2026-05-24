@@ -48,6 +48,7 @@ export class AddSectionPaciente implements OnInit {
     data: ['', Validators.required],
     horario: ['', Validators.required],
     observacoes: [''],
+    humor: [null as number | null],
   });
 
   ngOnInit(): void {
@@ -91,13 +92,14 @@ export class AddSectionPaciente implements OnInit {
     this.loading.set(true);
     this.erro.set(null);
 
-    const { id_paciente, data, horario, observacoes } = this.sessaoForm.value;
+    const { id_paciente, data, horario, observacoes, humor } = this.sessaoForm.value;
 
     this.sessaoService.create({
       id_paciente: id_paciente!,
       data: data!,
       horario: horario!,
       observacoes: observacoes ?? undefined,
+      humor: humor ?? undefined,
       id_psicologo: psi.id_psicologo,
     }).subscribe({
       next: () => this.dialogRef.close(true),

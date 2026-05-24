@@ -43,6 +43,18 @@
         </div>
     </section>
 
+    <section class="chart-section">
+        <div class="next-header">
+            <span>Evolução do Humor</span>
+        </div>
+        <div class="chart-wrapper">
+            @if (!temDadosHumor()) {
+                <p class="chart-empty">Registre o humor nas sessões para ver a evolução</p>
+            }
+            <canvas #canvasHumor [hidden]="!temDadosHumor()"></canvas>
+        </div>
+    </section>
+
     <section class="next-section">
         <div class="next-header">
             <span>Próximas sessões</span>
