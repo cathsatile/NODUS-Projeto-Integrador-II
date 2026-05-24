@@ -3,8 +3,8 @@
         <div class="texts">
             <h1>Sessões</h1>
             <div class="text-counter">
-                <strong>{{realizadas().length}}</strong><span> realizadas - </span>
-                <strong>{{agendadas().length}}</strong><span> agendadas</span>
+                <strong>{{totalRealizadas()}}</strong><span> realizadas - </span>
+                <strong>{{totalAgendadas()}}</strong><span> agendadas</span>
             </div>
         </div>
         <button class="new-section" (click)="openModal()">
@@ -16,9 +16,9 @@
     <div class="section-options">
         <mat-tab-group mat-stretch-tabs="false">
 
-            <mat-tab [label]="'Todas (' + todasSessoes().length + ')'">
+            <mat-tab [label]="'Todas (' + totalTodas() + ')'">
                 <div class="sections-list">
-                    @for (sessao of todasSessoes(); track sessao.id_sessao) {
+                    @for (sessao of todasVisiveis(); track sessao.id_sessao) {
                         <ng-container *ngTemplateOutlet="cardSessao; context: { sessao }"></ng-container>
                     } @empty {
                         <div class="empty-state">
@@ -26,12 +26,15 @@
                             <span>Nenhuma sessão registrada</span>
                         </div>
                     }
+                    @if (temMaisAll()) {
+                        <button class="ver-mais" (click)="verMais('all')">Ver mais</button>
+                    }
                 </div>
             </mat-tab>
 
-            <mat-tab [label]="'Realizadas (' + realizadas().length + ')'">
+            <mat-tab [label]="'Realizadas (' + totalRealizadas() + ')'">
                 <div class="sections-list">
-                    @for (sessao of realizadas(); track sessao.id_sessao) {
+                    @for (sessao of realizadasVisiveis(); track sessao.id_sessao) {
                         <ng-container *ngTemplateOutlet="cardSessao; context: { sessao }"></ng-container>
                     } @empty {
                         <div class="empty-state">
@@ -39,18 +42,24 @@
                             <span>Nenhuma sessão realizada</span>
                         </div>
                     }
+                    @if (temMaisDone()) {
+                        <button class="ver-mais" (click)="verMais('done')">Ver mais</button>
+                    }
                 </div>
             </mat-tab>
 
-            <mat-tab [label]="'Agendadas (' + agendadas().length + ')'">
+            <mat-tab [label]="'Agendadas (' + totalAgendadas() + ')'">
                 <div class="sections-list">
-                    @for (sessao of agendadas(); track sessao.id_sessao) {
+                    @for (sessao of agendadasVisiveis(); track sessao.id_sessao) {
                         <ng-container *ngTemplateOutlet="cardSessao; context: { sessao }"></ng-container>
                     } @empty {
                         <div class="empty-state">
                             <img src="assets/images/calendar.svg">
                             <span>Nenhuma sessão agendada</span>
                         </div>
+                    }
+                    @if (temMaisScheduled()) {
+                        <button class="ver-mais" (click)="verMais('scheduled')">Ver mais</button>
                     }
                 </div>
             </mat-tab>

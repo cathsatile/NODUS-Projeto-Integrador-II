@@ -1,5 +1,5 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AddSectionPaciente } from '../../components/add-section-paciente/add-section-paciente';
@@ -7,6 +7,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { PacienteService } from '../../core/services/paciente.service';
 import { SessaoService } from '../../core/services/sessao.service';
 import { Sessao } from '../../core/services/sessao.model';
+
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-sections',
@@ -22,21 +24,46 @@ export class Sections implements OnInit {
 
   private readonly agora = new Date();
 
-  readonly todasSessoes = this.sessaoService.sessoes;
-
-  readonly realizadas = computed(() =>
+  // Listas completas
+  private readonly todas = this.sessaoService.sessoes;
+  private readonly realizadasLista = computed(() =>
     this.sessaoService.sessoes().filter(s => new Date(s.data) < this.agora)
   );
-
-  readonly agendadas = computed(() =>
+  private readonly agendadasLista = computed(() =>
     this.sessaoService.sessoes().filter(s => new Date(s.data) >= this.agora)
   );
+
+  // Limites de paginação independentes por aba
+  readonly limiteAll = signal(PAGE_SIZE);
+  readonly limiteDone = signal(PAGE_SIZE);
+  readonly limiteScheduled = signal(PAGE_SIZE);
+
+  // Slices visíveis
+  readonly todasVisiveis = computed(() => this.todas().slice(0, this.limiteAll()));
+  readonly realizadasVisiveis = computed(() => this.realizadasLista().slice(0, this.limiteDone()));
+  readonly agendadasVisiveis = computed(() => this.agendadasLista().slice(0, this.limiteScheduled()));
+
+  // Contadores para labels das abas
+  readonly totalTodas = computed(() => this.todas().length);
+  readonly totalRealizadas = computed(() => this.realizadasLista().length);
+  readonly totalAgendadas = computed(() => this.agendadasLista().length);
+
+  // Controle de "Ver mais"
+  readonly temMaisAll = computed(() => this.todas().length > this.limiteAll());
+  readonly temMaisDone = computed(() => this.realizadasLista().length > this.limiteDone());
+  readonly temMaisScheduled = computed(() => this.agendadasLista().length > this.limiteScheduled());
 
   ngOnInit(): void {
     const psi = this.authService.psicologoAtual();
     if (!psi) return;
     this.sessaoService.getByPsicologo(psi.id_psicologo).subscribe();
     this.pacienteService.getByPsicologo(psi.id_psicologo).subscribe();
+  }
+
+  verMais(aba: 'all' | 'done' | 'scheduled'): void {
+    if (aba === 'all') this.limiteAll.update(l => l + PAGE_SIZE);
+    if (aba === 'done') this.limiteDone.update(l => l + PAGE_SIZE);
+    if (aba === 'scheduled') this.limiteScheduled.update(l => l + PAGE_SIZE);
   }
 
   nomePaciente(id_paciente: number): string {

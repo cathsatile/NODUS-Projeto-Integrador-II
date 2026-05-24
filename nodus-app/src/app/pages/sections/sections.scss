@@ -235,6 +235,21 @@
 
     }
 
+    .ver-mais {
+        width: 100%;
+        max-width: 480px;
+        padding: 12px;
+        margin-top: 4px;
+        border-radius: 10px;
+        border: 1.5px solid var(--color-red, #c3334b);
+        background: transparent;
+        color: var(--color-red, #c3334b);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
     .empty-state {
         display: flex;
         flex-direction: column;
