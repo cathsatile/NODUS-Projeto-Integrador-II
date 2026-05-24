@@ -1,11 +1,11 @@
 <div class="home-container">
     <section class="first-section">
         <span>Bem-vindo de volta,</span>
-        <h1>{{psiNome}}</h1>
+        <h1>{{psiNome()}}</h1>
 
         <div class="num-sections">
             <img src="assets/images/calendar.svg">
-            <span>{{sessaoHoje}}</span>
+            <span>{{sessaoHoje()}}</span>
         </div>
     </section>
 
@@ -16,7 +16,7 @@
                     <img src="assets/images/people.svg">
                 </div>
                 <div class="text-container">
-                    <span>{{numPacientes}}</span>
+                    <span>{{numPacientes()}}</span>
                     <span>Pacientes</span>
                 </div>
             </div>
@@ -25,7 +25,7 @@
                     <img src="assets/images/check.svg">
                 </div>
                 <div class="text-container">
-                    <span>{{numSessoesMes}}</span>
+                    <span>{{numSessoesMes()}}</span>
                     <span>Sessões/mês</span>
                 </div>
             </div>
@@ -51,20 +51,18 @@
                 <img src="assets/images/arrow.svg">
             </button>
         </div>
-        <div class="next-container">
-            <img src="assets/images/calendar.svg">
-            <span>Nenhuma sessão agendada</span>
-        </div>
-
+        @if (proximasSessoes().length === 0) {
+            <div class="next-container">
+                <img src="assets/images/calendar.svg">
+                <span>Nenhuma sessão agendada</span>
+            </div>
+        } @else {
+            @for (sessao of proximasSessoes(); track sessao.id_sessao) {
+                <div class="next-container">
+                    <img src="assets/images/calendar.svg">
+                    <span>{{sessao.nomePaciente}} — {{sessao.data | date:'dd/MM/yyyy'}} às {{sessao.horario}}</span>
+                </div>
+            }
+        }
     </section>
-
-    <section>
-
-
-    </section>
-    @if(popupAberto){
-        <div class="overlay">
-            <app-add-section-paciente new="sessao"></app-add-section-paciente>
-        </div>
-    }
 </div>

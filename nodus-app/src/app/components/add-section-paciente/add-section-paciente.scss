@@ -106,6 +106,32 @@
         }
     }
 
+    .erro {
+        color: var(--color-red, #e53935);
+        font-size: 12px;
+        margin: 0;
+        text-align: center;
+    }
+
+    .erro-campo {
+        color: var(--color-red, #e53935);
+        font-size: 11px;
+        display: block;
+        margin-top: 2px;
+    }
+
+    .stepper {
+        width: 100%;
+        background: transparent;
+    }
+
+    .step-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
     .submit-button {
         border-radius: 10px;
         border: none;
