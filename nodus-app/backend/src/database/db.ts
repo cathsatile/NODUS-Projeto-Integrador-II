@@ -17,3 +17,8 @@ pool.query(`
     ALTER TABLE sessao
     ADD COLUMN IF NOT EXISTS horario VARCHAR(10);
 `).catch(err => console.error('[db] Erro ao aplicar migration de horario:', err));
+
+pool.query(`
+    ALTER TABLE sessao
+    ADD COLUMN IF NOT EXISTS humor INTEGER;
+`).catch(err => console.error('[db] Erro ao aplicar migration de humor:', err));

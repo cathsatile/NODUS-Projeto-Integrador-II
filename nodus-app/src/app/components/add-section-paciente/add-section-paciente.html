@@ -111,6 +111,17 @@
                 </div>
             </div>
             <div class="input-container">
+                <label>Humor do paciente:</label>
+                <select class="input" formControlName="humor">
+                    <option [ngValue]="null">- Não registrado -</option>
+                    <option [ngValue]="1">😢 Muito Mal</option>
+                    <option [ngValue]="2">😟 Mal</option>
+                    <option [ngValue]="3">😐 Neutro</option>
+                    <option [ngValue]="4">😊 Bem</option>
+                    <option [ngValue]="5">😆 Muito Bem</option>
+                </select>
+            </div>
+            <div class="input-container">
                 <label>Observações:</label>
                 <input class="input" type="text" formControlName="observacoes"
                     placeholder="Temas, evolução, exercícios propostos...">

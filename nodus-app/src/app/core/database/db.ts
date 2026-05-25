@@ -16,6 +16,7 @@ export interface SessaoLocal {
   data: string;
   horario: string;
   observacoes?: string; // sempre armazenado criptografado
+  humor?: number;
   id_paciente: number;
   id_psicologo: number;
 }
