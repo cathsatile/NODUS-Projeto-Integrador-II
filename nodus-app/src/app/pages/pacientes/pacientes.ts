@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from '../../core/auth/auth.service';
@@ -18,7 +18,17 @@ export class Pacientes implements OnInit {
   private dialog = inject(MatDialog);
   protected pacienteService = inject(PacienteService);
 
+  readonly busca = signal('');
+
   readonly numPacientes = computed(() => this.pacienteService.pacientes().length);
+
+  readonly pacientesFiltrados = computed(() => {
+    const termo = this.busca().toLowerCase().trim();
+    if (!termo) return this.pacienteService.pacientes();
+    return this.pacienteService.pacientes().filter(p =>
+      p.nome.toLowerCase().includes(termo)
+    );
+  });
 
   ngOnInit(): void {
     const psi = this.authService.psicologoAtual();

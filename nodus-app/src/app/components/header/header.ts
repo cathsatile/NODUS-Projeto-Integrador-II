@@ -25,6 +25,10 @@ export class Header {
       .join('');
   });
 
+  irParaPerfil(): void {
+    this.router.navigate(['/principal/psicologo-profile']);
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
