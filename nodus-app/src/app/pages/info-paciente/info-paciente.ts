@@ -4,8 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { PacienteService } from '../../core/services/paciente.service';
 import { SessaoService } from '../../core/services/sessao.service';
-
-const HUMOR_LABEL: Record<number, string> = { 1: '😢 Muito Mal', 2: '😟 Mal', 3: '😐 Neutro', 4: '😊 Bem', 5: '😆 Muito Bem' };
+import { emocaoEmoji, emocaoLabel, statusLabel } from '../../core/services/emocoes';
 
 @Component({
   selector: 'app-info-paciente',
@@ -43,8 +42,11 @@ export class InfoPaciente implements OnInit {
   });
 
   humorLabel(humor: number | undefined): string {
-    if (humor == null) return '—';
-    return HUMOR_LABEL[humor] ?? String(humor);
+    return `${emocaoEmoji(humor)} ${emocaoLabel(humor)}`.trim();
+  }
+
+  statusLabel(status: string | undefined): string {
+    return statusLabel(status);
   }
 
   ngOnInit(): void {

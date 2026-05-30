@@ -1,0 +1,79 @@
+.sessoes-dia-container {
+    padding: 20px;
+    font-family: 'DM Sans', sans-serif;
+    min-width: 300px;
+    max-width: 420px;
+
+    .dia-header {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 16px;
+        position: relative;
+
+        h2 {
+            margin: 0 0 4px;
+            font-size: 16px;
+            font-family: 'Playfair Display', serif;
+            text-transform: capitalize;
+        }
+
+        span { font-size: 12px; color: grey; }
+
+        .close-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: grey;
+            padding: 0;
+        }
+    }
+
+    .sessao-item {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 12px 0;
+        border-top: 1px solid rgb(240, 240, 240);
+
+        .sessao-hora {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-red);
+            min-width: 44px;
+        }
+
+        .sessao-detalhes {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            .sessao-paciente {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .sessao-emocao {
+                font-size: 12px;
+                color: grey;
+            }
+
+            .sessao-status {
+                font-size: 11px;
+                font-weight: 500;
+                padding: 2px 8px;
+                border-radius: 20px;
+                align-self: flex-start;
+
+                &.status-realizada           { background-color: #d2f3d9; color: #2e7d32; }
+                &.status-cancelada_paciente,
+                &.status-cancelada_psicologo { background-color: #fedce2; color: #c3334b; }
+                &.status-nao_compareceu      { background-color: #fff3cd; color: #856404; }
+                &.status-remarcada           { background-color: #e8eaf6; color: #3949ab; }
+            }
+        }
+    }
+}

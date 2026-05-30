@@ -17,6 +17,7 @@ export interface SessaoLocal {
   horario: string;
   observacoes?: string; // sempre armazenado criptografado
   humor?: number;
+  status?: string;
   id_paciente: number;
   id_psicologo: number;
 }
@@ -49,6 +50,13 @@ export class DbService extends Dexie {
     this.version(2).stores({
       pacientes: '++id, id_psicologo, email',
       sessoes: '++id, id_psicologo, id_paciente, data',
+      humor: '++id, id_psicologo, id_paciente, data',
+    });
+
+    // v3: adiciona id_sessao e id_paciente como índices para updates pontuais
+    this.version(3).stores({
+      pacientes: '++id, id_psicologo, id_paciente, email',
+      sessoes: '++id, id_sessao, id_psicologo, id_paciente, data',
       humor: '++id, id_psicologo, id_paciente, data',
     });
   }

@@ -26,10 +26,10 @@ export const findByPsicologo = async (id_psicologo: number): Promise<Paciente[]>
 
 export const create = async (data: Paciente): Promise<Paciente> => {
   const result = await pool.query(
-    `INSERT INTO paciente (nome, email, senha, data_nascimento, id_psicologo)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO paciente (nome, email, data_nascimento, id_psicologo)
+     VALUES ($1, $2, $3, $4)
      RETURNING ${COLUNAS}`,
-    [data.nome, data.email, data.senha, data.data_nascimento, data.id_psicologo]
+    [data.nome, data.email, data.data_nascimento, data.id_psicologo]
   );
   return result.rows[0];
 };

@@ -30,3 +30,13 @@ pool.query(`
         ALTER COLUMN email TYPE TEXT,
         ALTER COLUMN data_nascimento TYPE TEXT USING data_nascimento::TEXT;
 `).catch(err => console.error('[db] Erro ao aplicar migration de colunas paciente:', err));
+
+// senha do paciente passa a ser opcional (fluxo de cadastro via psicólogo não requer senha)
+pool.query(`
+    ALTER TABLE paciente ALTER COLUMN senha DROP NOT NULL;
+`).catch(err => console.error('[db] Erro ao aplicar migration de senha nullable:', err));
+
+// coluna status para registrar o resultado de cada sessão
+pool.query(`
+    ALTER TABLE sessao ADD COLUMN IF NOT EXISTS status VARCHAR(50);
+`).catch(err => console.error('[db] Erro ao aplicar migration de status:', err));

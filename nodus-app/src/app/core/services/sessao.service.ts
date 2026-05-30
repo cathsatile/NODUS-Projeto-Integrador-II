@@ -121,6 +121,11 @@ export class SessaoService {
           ...atualizada,
           observacoes: chave ? this.decifrarObservacoes(atualizada.observacoes, chave) : atualizada.observacoes,
         };
+        void this.db.sessoes.where('id_sessao').equals(id).modify({
+          status: atualizada.status,
+          humor: atualizada.humor,
+          observacoes: atualizada.observacoes,
+        });
         this.sessoes.update(lista =>
           lista.map(s => s.id_sessao === id ? decifrada : s)
         );
