@@ -1,4 +1,9 @@
 <div class="header-container">
+    @if (!networkStatus.isOnline()) {
+        <div class="offline-banner">
+            Sem conexão — exibindo dados locais
+        </div>
+    }
     <div class="header">
         <div class="logo-titulo">
             <img src="assets/images/logo_sem_texto.png">
