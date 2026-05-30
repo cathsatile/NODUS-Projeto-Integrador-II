@@ -22,3 +22,11 @@ pool.query(`
     ALTER TABLE sessao
     ADD COLUMN IF NOT EXISTS humor INTEGER;
 `).catch(err => console.error('[db] Erro ao aplicar migration de humor:', err));
+
+// Converte colunas de paciente para TEXT para suportar dados criptografados (AES+base64)
+pool.query(`
+    ALTER TABLE paciente
+        ALTER COLUMN nome TYPE TEXT,
+        ALTER COLUMN email TYPE TEXT,
+        ALTER COLUMN data_nascimento TYPE TEXT USING data_nascimento::TEXT;
+`).catch(err => console.error('[db] Erro ao aplicar migration de colunas paciente:', err));

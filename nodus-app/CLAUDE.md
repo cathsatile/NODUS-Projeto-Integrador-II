@@ -180,12 +180,13 @@ As tabelas do banco local são: `psicologo`, `paciente`, `sessao`, `humor`.
 - [x] `environments/environment.ts` e `environment.prod.ts` criados; `angular.json` configurado com `fileReplacements`
 - [x] Todas as URLs hardcoded `localhost:3000` substituídas por `environment.apiUrl`
 
-### Próximo — Sprint 5-B: Qualidade
-- [ ] Criptografar dados no `PacienteService` (cifrar nome/email/data antes de enviar)
-- [ ] CORS — adicionar `FRONTEND_ORIGIN` ao `.env` do backend
-- [ ] `CryptoService.decrypt` deve lançar erro em vez de retornar ciphertext silenciosamente
-- [ ] Corrigir memory leak em `SessaoService.getByPsicologo` (subscription interna sem cleanup)
-- [ ] Criptografar `observacoes` no `SessaoService.update`
+### Sprint 5-B: Qualidade (concluído — branch feat/sprint-5a-security)
+- [x] `PacienteService` — cifra `nome`, `email`, `data_nascimento` antes de enviar; decifra após receber
+- [x] Migration automática no `db.ts`: colunas `paciente.nome`, `email`, `data_nascimento` → `TEXT` (suporta AES+base64)
+- [x] CORS — `FRONTEND_ORIGIN` adicionado ao `.env` e documentado no `.env.example`
+- [x] `CryptoService.decrypt` lança erro em vez de retornar ciphertext silenciosamente
+- [x] `SessaoService.getByPsicologo` — subscription interna substituída por `Promise.then()` (sem memory leak)
+- [x] `SessaoService.update` — cifra `observacoes` antes do PUT; decifra a resposta
 
 ### Sprint 5-C: Build Capacitor e simulação no celular
 > Somente após Sprint 5-B concluída.
