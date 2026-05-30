@@ -1,0 +1,198 @@
+.info-container {
+    min-height: 100%;
+    padding: 80px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    font-family: 'DM Sans', sans-serif;
+    background-color: rgb(236, 236, 236);
+
+    img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .top-bar {
+        width: 100%;
+        max-width: 480px;
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--color-red);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0;
+
+            .arrow-left {
+                transform: rotate(180deg);
+                filter: brightness(0) saturate(100%) invert(23%) sepia(94%) saturate(2194%) hue-rotate(331deg) brightness(89%) contrast(94%);
+            }
+        }
+    }
+
+    .profile-card {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+        max-width: 480px;
+        background-color: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        .profile-avatar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background-color: #fedce2;
+            border: solid 1.5px var(--color-red);
+            width: 56px;
+            height: 56px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--color-red);
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            h1 {
+                margin: 0;
+                font-size: 18px;
+                font-family: 'Playfair Display', serif;
+            }
+
+            span {
+                font-size: 13px;
+                color: grey;
+            }
+        }
+    }
+
+    .details-card {
+        width: 100%;
+        max-width: 480px;
+        background-color: white;
+        border-radius: 15px;
+        padding: 16px 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        .detail-item {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+
+            .detail-label {
+                font-size: 13px;
+                color: grey;
+            }
+
+            .detail-value {
+                font-size: 13px;
+                font-weight: 500;
+            }
+        }
+    }
+
+    .sessoes-section {
+        width: 100%;
+        max-width: 480px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .sessao-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .sessao-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                .sessao-data {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 13px;
+                    font-weight: 500;
+                }
+
+                .sessao-humor {
+                    font-size: 12px;
+                    color: grey;
+                }
+            }
+
+            .sessao-obs {
+                margin: 0;
+                font-size: 13px;
+                color: #555;
+                line-height: 1.5;
+                background-color: rgb(248, 248, 248);
+                padding: 8px 10px;
+                border-radius: 8px;
+            }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 40px 20px;
+            color: grey;
+            font-size: 14px;
+
+            img {
+                height: 32px;
+                width: 32px;
+                opacity: 0.4;
+            }
+        }
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 40px 20px;
+        color: grey;
+        font-size: 14px;
+
+        img {
+            height: 32px;
+            width: 32px;
+            opacity: 0.4;
+        }
+    }
+}
