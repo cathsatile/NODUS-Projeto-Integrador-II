@@ -166,7 +166,31 @@ As tabelas do banco local são: `psicologo`, `paciente`, `sessao`, `humor`.
 
 ## Roadmap até simulação no celular
 
-### Próximo — Sprint 2: Conectar UI aos dados reais
+### Sprint 5-A: Hardening de Segurança (concluído — branch feat/sprint-5a-security)
+- [x] `authMiddleware` JWT criado em `backend/src/middleware/auth.middleware.ts`
+- [x] Middleware aplicado em `/api/psicologos`, `/api/pacientes`, `/api/sessoes` no `server.ts`
+- [x] `paciente.controller.ts` — `id_psicologo` extraído do token; checks de posse em GET/PUT/DELETE
+- [x] `sessao.controller.ts` — `id_psicologo` extraído do token; checks de posse em GET/PUT/DELETE
+- [x] `psicologo.controller.ts` — rotas restritas ao próprio psicólogo autenticado
+- [x] CORS restrito: aceita apenas `FRONTEND_ORIGIN` (`.env`) em vez de qualquer origin
+- [x] PBKDF2: iterações elevadas de 1.000 → 100.000 (NIST SP 800-132)
+- [x] Salt único por usuário: `NODUS:<email>:2026` em vez de salt global fixo
+- [x] Chave AES removida do `sessionStorage` — existe apenas em memória (signal `_chaveCripto`)
+- [x] `isAuthenticated` requer JWT **e** chave de criptografia (login sempre re-deriva a chave)
+- [x] `environments/environment.ts` e `environment.prod.ts` criados; `angular.json` configurado com `fileReplacements`
+- [x] Todas as URLs hardcoded `localhost:3000` substituídas por `environment.apiUrl`
+
+### Próximo — Sprint 5-B: Qualidade
+- [ ] Criptografar dados no `PacienteService` (cifrar nome/email/data antes de enviar)
+- [ ] CORS — adicionar `FRONTEND_ORIGIN` ao `.env` do backend
+- [ ] `CryptoService.decrypt` deve lançar erro em vez de retornar ciphertext silenciosamente
+- [ ] Corrigir memory leak em `SessaoService.getByPsicologo` (subscription interna sem cleanup)
+- [ ] Criptografar `observacoes` no `SessaoService.update`
+
+### Sprint 5-C: Build Capacitor e simulação no celular
+> Somente após Sprint 5-B concluída.
+
+### ~~Próximo — Sprint 2: Conectar UI aos dados reais~~
 - [ ] Remover dados hardcoded de `home-page`, `header` e `pacientes` — injetar `AuthService` e `PacienteService`
 - [ ] `home-page`: exibir nome do psicólogo logado via `authService.psicologoAtual().nome`
 - [ ] `header`: exibir iniciais reais do psicólogo via `computed()`

@@ -5,12 +5,13 @@ import { Sessao, CriarSessaoDto } from './sessao.model';
 import { AuthService } from '../auth/auth.service';
 import { CryptoService } from './crypto';
 import { DbService, SessaoLocal } from '../database/db';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SessaoService {
-  private readonly apiUrl = 'http://localhost:3000/api/sessoes';
+  private readonly apiUrl = `${environment.apiUrl}/sessoes`;
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private cryptoService = inject(CryptoService);

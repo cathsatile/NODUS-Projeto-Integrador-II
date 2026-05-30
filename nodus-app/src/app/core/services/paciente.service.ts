@@ -2,12 +2,13 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Paciente, CriarPacienteDto } from './paciente.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PacienteService {
-  private readonly apiUrl = 'http://localhost:3000/api/pacientes';
+  private readonly apiUrl = `${environment.apiUrl}/pacientes`;
 
   pacientes = signal<Paciente[]>([]);
 
