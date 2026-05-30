@@ -13,6 +13,12 @@
         </button>
     </div>
 
+    <input class="search-input"
+        type="text"
+        placeholder="Buscar por paciente..."
+        [ngModel]="busca()"
+        (ngModelChange)="busca.set($event)">
+
     <div class="section-options">
         <mat-tab-group mat-stretch-tabs="false">
 
@@ -64,6 +70,22 @@
                 </div>
             </mat-tab>
 
+            <mat-tab [label]="'Não realiz. (' + totalNaoRealizadas() + ')'">
+                <div class="sections-list">
+                    @for (sessao of naoRealizadasVisiveis(); track sessao.id_sessao) {
+                        <ng-container *ngTemplateOutlet="cardSessao; context: { sessao }"></ng-container>
+                    } @empty {
+                        <div class="empty-state">
+                            <img src="assets/images/calendar.svg">
+                            <span>Nenhuma sessão não realizada</span>
+                        </div>
+                    }
+                    @if (temMaisNaoRealizadas()) {
+                        <button class="ver-mais" (click)="verMais('nao')">Ver mais</button>
+                    }
+                </div>
+            </mat-tab>
+
         </mat-tab-group>
     </div>
 </div>
@@ -80,8 +102,7 @@
             </div>
         </div>
         <div class="status-container">
-            <img src="assets/images/clock.svg">
-            <div class="status" [class.status-agendada]="statusDe(sessao) === 'Agendada'">
+            <div [class]="classStatus(sessao)">
                 {{ statusDe(sessao) }}
             </div>
         </div>

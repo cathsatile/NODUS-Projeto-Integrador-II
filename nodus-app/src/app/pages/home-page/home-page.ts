@@ -91,6 +91,12 @@ export class HomePage implements OnInit {
     this.sessaoService.getByPsicologo(psi.id_psicologo).subscribe();
   }
 
+  sessaoJaAconteceu(data: string, horario: string | null | undefined): boolean {
+    const dateStr = data.slice(0, 10);
+    const timeStr = horario ?? '23:59';
+    return new Date(`${dateStr}T${timeStr}:00`) <= new Date();
+  }
+
   marcarStatus(id_sessao: number, status: string): void {
     this.sessaoService.update(id_sessao, { status } as Partial<Sessao>).subscribe();
   }

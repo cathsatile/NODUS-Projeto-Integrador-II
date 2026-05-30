@@ -21,4 +21,40 @@
         <span class="legenda-dot"></span>
         <span>Dias com sessão agendada</span>
     </div>
+
+    @if (selected()) {
+        <div class="sessoes-dia">
+            <div class="sessoes-dia-header">
+                <span class="sessoes-dia-data">{{ dataSelecionada() }}</span>
+                @if (sessoesDia().length > 0) {
+                    <span class="sessoes-dia-count">{{ sessoesDia().length }} sessão(ões)</span>
+                }
+            </div>
+
+            @if (sessoesDia().length === 0) {
+                <div class="sessoes-dia-vazio">
+                    <span>Nenhuma sessão neste dia</span>
+                </div>
+            } @else {
+                @for (sessao of sessoesDia(); track sessao.id_sessao) {
+                    <div class="sessao-item">
+                        <div class="sessao-hora">{{ sessao.horario }}</div>
+                        <div class="sessao-detalhes">
+                            <span class="sessao-paciente">{{ sessao.nomePaciente }}</span>
+                            @if (sessao.humor != null) {
+                                <span class="sessao-emocao">
+                                    {{ emocaoEmoji(sessao.humor) }} {{ emocaoLabel(sessao.humor) }}
+                                </span>
+                            }
+                            @if (sessao.status) {
+                                <span class="sessao-status status-{{ sessao.status }}">
+                                    {{ statusLabel(sessao.status) }}
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
 </div>

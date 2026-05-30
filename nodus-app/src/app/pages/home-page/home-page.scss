@@ -273,6 +273,7 @@
                 border-radius: 20px;
                 align-self: flex-start;
 
+                &.status-agendada            { background-color: #fff8e1; color: #c77c00; }
                 &.status-realizada           { background-color: #d2f3d9; color: #2e7d32; }
                 &.status-cancelada_paciente,
                 &.status-cancelada_psicologo { background-color: #fedce2; color: var(--color-red); }

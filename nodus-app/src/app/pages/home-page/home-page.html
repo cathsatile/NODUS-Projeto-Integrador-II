@@ -90,7 +90,7 @@
                         <span class="sessao-nome">{{sessao.nomePaciente}}</span>
                         <span class="sessao-hora">{{sessao.horario}}</span>
                     </div>
-                    @if (!sessao.status) {
+                    @if (!sessao.status && sessaoJaAconteceu(sessao.data, sessao.horario)) {
                         <div class="sessao-actions">
                             <button class="btn-realizada" (click)="marcarStatus(sessao.id_sessao!, 'realizada')">
                                 ✓ Realizada
@@ -106,10 +106,12 @@
                                 }
                             </select>
                         </div>
-                    } @else {
+                    } @else if (sessao.status) {
                         <span class="status-badge status-{{sessao.status}}">
                             {{statusLabel(sessao.status)}}
                         </span>
+                    } @else {
+                        <span class="status-badge status-agendada">Agendada</span>
                     }
                 </div>
             }

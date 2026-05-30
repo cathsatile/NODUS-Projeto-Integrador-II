@@ -43,11 +43,9 @@ export class AddSectionPaciente implements OnInit {
 
   get sessaoNoPassado(): boolean {
     const d = this.sessaoForm.get('data')?.value;
-    if (!d) return false;
-    const data = new Date(d + 'T00:00:00');
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    return data <= hoje;
+    const h = this.sessaoForm.get('horario')?.value;
+    if (!d || !h) return false;
+    return new Date(`${d}T${h}:00`) <= new Date();
   }
 
   ngOnInit(): void {
