@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NODUS</string>
+    <string name="title_activity_main">NODUS</string>
+    <string name="package_name">com.nodus.app</string>
+    <string name="custom_url_scheme">com.nodus.app</string>
+</resources>
