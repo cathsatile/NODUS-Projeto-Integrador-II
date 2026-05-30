@@ -9,10 +9,18 @@ import { authMiddleware } from './middleware/auth.middleware';
 
 dotenv.config();
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:4200';
+const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:4200')
+  .split(',').map(o => o.trim());
 
 const app = express();
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permite requisições sem origin (ex: mobile nativo, curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+    else callback(new Error(`CORS: origin '${origin}' não permitida`));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // Rotas públicas (não exigem token)
