@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "ts-node-dev --respawn src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test:security": "node test-security.js"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
