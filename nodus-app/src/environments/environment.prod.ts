@@ -3,4 +3,6 @@
 export const environment = {
   production: true,
   apiUrl: 'http://192.168.0.137:3000/api',
+  // Authorized JavaScript origins: capacitor://localhost, https://localhost
+  googleClientId: '',
 };

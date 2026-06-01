@@ -68,6 +68,28 @@
     }
 }
 
+.backup-button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1.5px solid #5a67d8;
+    background: transparent;
+    color: #5a67d8;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    img {
+        height: 18px;
+        width: 18px;
+    }
+}
+
 .logout-button {
     margin-top: 8px;
     width: 100%;

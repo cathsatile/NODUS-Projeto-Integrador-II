@@ -5,6 +5,7 @@ import { Agenda } from './agenda/agenda';
 import { InfoPaciente } from './info-paciente/info-paciente';
 import { Sections } from './sections/sections';
 import { PsicologoProfile } from './psicologo-profile/psicologo-profile';
+import { BackupPage } from './backup/backup';
 
 export const principalRoutes: Routes = [
     { path: 'home', component: HomePage },
@@ -13,5 +14,6 @@ export const principalRoutes: Routes = [
     { path: 'agenda', component: Agenda },
     { path: 'sections', component: Sections },
     { path: 'psicologo-profile', component: PsicologoProfile },
+    { path: 'backup', component: BackupPage },
     { path: '**', redirectTo: 'home' },
 ];

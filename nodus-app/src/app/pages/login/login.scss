@@ -189,4 +189,316 @@
         margin: 4px 0 0;
         width: 100%;
     }
+
+    .desbloquear-bloco {
+        max-width: 280px;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .desbloquear-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: var(--gradient-color);
+        color: white;
+        font-size: 26px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: center;
+    }
+
+    .desbloquear-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .desbloquear-nome {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .desbloquear-email {
+            font-size: 12px;
+            color: grey;
+        }
+    }
+
+    .btn-trocar-conta {
+        outline: none;
+        border: none;
+        background: transparent;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        color: grey;
+        cursor: pointer;
+        padding: 4px 0;
+        text-decoration: underline;
+    }
+
+    .desbloquear-dica {
+        font-size: 11px;
+        color: #aaa;
+        text-align: center;
+        margin: 0;
+        line-height: 1.5;
+        padding: 0 8px;
+    }
+
+    // ─── Tela inicial: primeira vez? ─────────────────────────────────────────
+
+    .inicial-bloco {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        padding: 24px 20px;
+        width: 100%;
+        max-width: 280px;
+        text-align: center;
+    }
+
+    .inicial-pergunta {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        margin: 0 0 4px;
+        line-height: 1.4;
+    }
+
+    .btn-secundario {
+        outline: none;
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        color: #555;
+        border: 1.5px solid #ccc;
+        background: white;
+        border-radius: 5px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+
+        &:hover { background: #f5f5f5; }
+    }
+
+    // ─── Tela de restauração ──────────────────────────────────────────────────
+
+    .restaurar-bloco {
+        max-width: 290px;
+        gap: 12px;
+        padding: 20px;
+    }
+
+    .restaurar-titulo {
+        margin: 4px 0 0;
+        font-size: 17px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .restaurar-desc {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+        text-align: center;
+    }
+
+    .btn-google-drive {
+        outline: none;
+        width: 100%;
+        padding: 11px 14px;
+        border: 1.5px solid #ddd;
+        background: white;
+        border-radius: 8px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        color: #444;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: opacity 0.15s;
+
+        &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .g-icon { width: 16px; height: 16px; }
+    }
+
+    .drive-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+    }
+
+    .drive-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 10px 12px;
+        background: #f7f7f7;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        cursor: pointer;
+        outline: none;
+        font-family: 'DM Sans', sans-serif;
+        transition: background 0.15s;
+
+        &:hover { background: #efefef; }
+    }
+
+    .drive-item-info {
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        gap: 2px;
+    }
+
+    .drive-item-nome {
+        font-size: 13px;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .drive-item-data {
+        font-size: 11px;
+        color: #888;
+    }
+
+    .drive-item-arrow {
+        font-size: 20px;
+        color: #bbb;
+        line-height: 1;
+    }
+
+    .restaurar-ou {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 10px;
+        margin: 4px 0;
+
+        .separador {
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .ou {
+            font-size: 12px;
+            color: #aaa;
+            white-space: nowrap;
+        }
+    }
+
+    .btn-arquivo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px;
+        border: 1.5px dashed #bbb;
+        background: #fafafa;
+        border-radius: 8px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        color: #555;
+        cursor: pointer;
+        text-align: center;
+        transition: background 0.15s;
+
+        &:hover { background: #f0f0f0; }
+    }
+
+    .btn-sem-backup {
+        outline: none;
+        border: none;
+        background: transparent;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        color: #888;
+        cursor: pointer;
+        padding: 4px 0;
+        text-decoration: underline;
+        text-align: center;
+    }
+
+    // ─── Confirmar senha do backup ────────────────────────────────────────────
+
+    .backup-meta-card {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        background: #f4f4f4;
+        border-radius: 8px;
+        padding: 12px 14px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .backup-meta-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #888;
+    }
+
+    .backup-meta-email {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        word-break: break-all;
+    }
+
+    .backup-meta-data {
+        font-size: 11px;
+        color: #999;
+    }
+
+    .restaurar-senha-desc {
+        font-size: 13px;
+        color: #555;
+        text-align: center;
+        margin: 4px 0;
+        line-height: 1.5;
+    }
+
+    // ─── Login com backup verificado ─────────────────────────────────────────
+
+    .backup-aviso {
+        width: 100%;
+        background: #e8f5e9;
+        border: 1px solid #a5d6a7;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 13px;
+        color: #2e7d32;
+        text-align: center;
+    }
+
+    // ─── Cadastro ─────────────────────────────────────────────────────────────
+
+    .btn-ja-tenho-conta {
+        outline: none;
+        border: none;
+        background: transparent;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        color: grey;
+        cursor: pointer;
+        padding: 4px 0;
+        text-decoration: underline;
+        text-align: center;
+    }
 }

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -11,6 +11,8 @@ import {
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService, CriarPsicologoDto } from '../../core/auth/auth.service';
+import { GoogleDriveService, DriveFile } from '../../core/services/google-drive.service';
+import { BackupService, BackupData, EncryptedBackup } from '../../core/services/backup.service';
 
 function senhasIguaisValidator(form: AbstractControl): ValidationErrors | null {
   const senha = form.get('senha')?.value as string;
@@ -34,20 +36,40 @@ interface CadastroFormValue {
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
-export class Login {
-  tipoBotao: '' | 'login' | 'cadastro' = '';
+export class Login implements OnInit {
+  tipoBotao: 'inicial' | 'cadastro' | 'login' | 'restaurar' | 'restaurar-senha' | 'desbloquear' = 'inicial';
 
   readonly loading = signal(false);
   readonly erro = signal('');
+  readonly erroRestauro = signal('');
+
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private googleDrive = inject(GoogleDriveService);
+  private backupService = inject(BackupService);
+  private fb = inject(FormBuilder);
+
+  readonly psicologo = this.authService.psicologoAtual;
+  readonly iniciais = computed(() => {
+    const p = this.psicologo();
+    if (!p) return '';
+    return p.nome.split(' ').filter(w => w.length > 0).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  });
+
+  // Estado do fluxo de restauração
+  readonly backupCarregado = signal<EncryptedBackup | null>(null);
+  readonly backupsDrive = signal<DriveFile[]>([]);
+  readonly carregandoDrive = signal(false);
+
+  // Dados decriptografados aguardando importação após login
+  _backupParaImportar: BackupData | null = null;
 
   loginForm: FormGroup;
   cadastroForm: FormGroup;
+  desbloquearForm: FormGroup;
+  restaurarSenhaForm: FormGroup;
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       senha: ['', [Validators.required, Validators.minLength(6)]],
@@ -64,7 +86,69 @@ export class Login {
       },
       { validators: senhasIguaisValidator }
     );
+
+    this.desbloquearForm = this.fb.group({
+      senha: ['', [Validators.required, Validators.minLength(6)]],
+    });
+
+    this.restaurarSenhaForm = this.fb.group({
+      senha: ['', [Validators.required, Validators.minLength(6)]],
+    });
   }
+
+  ngOnInit(): void {
+    if (this.authService.precisaDesbloquear()) {
+      this.tipoBotao = 'desbloquear';
+    }
+  }
+
+  // ─── Tela inicial ─────────────────────────────────────────────────────────
+
+  primeiraVez(): void {
+    this.tipoBotao = 'cadastro';
+    this.erro.set('');
+  }
+
+  naoEPrimeiraVez(): void {
+    this.tipoBotao = 'restaurar';
+    this.erroRestauro.set('');
+    this.backupsDrive.set([]);
+  }
+
+  voltarParaInicial(): void {
+    this.tipoBotao = 'inicial';
+    this.erro.set('');
+    this.erroRestauro.set('');
+  }
+
+  // ─── Desbloqueio (retorno ao app) ─────────────────────────────────────────
+
+  desbloquear(): void {
+    if (this.desbloquearForm.invalid) {
+      this.desbloquearForm.markAllAsTouched();
+      return;
+    }
+    this.loading.set(true);
+    this.erro.set('');
+
+    const { senha } = this.desbloquearForm.value as { senha: string };
+    const sucesso = this.authService.desbloquear(senha);
+
+    if (sucesso) {
+      void this.router.navigate(['/principal/home']);
+    } else {
+      this.erro.set('Senha incorreta.');
+      this.loading.set(false);
+    }
+  }
+
+  trocarConta(): void {
+    this.authService.logout();
+    this.tipoBotao = 'inicial';
+    this.erro.set('');
+  }
+
+  // ─── Login ───────────────────────────────────────────────────────────────
 
   fazerLogin(): void {
     if (this.loginForm.invalid) {
@@ -76,7 +160,20 @@ export class Login {
 
     const { email, senha } = this.loginForm.value as { email: string; senha: string };
     this.authService.login(email, senha).subscribe({
-      next: () => this.router.navigate(['/principal/home']),
+      next: async () => {
+        this.loading.set(false);
+        // Se veio de uma restauração, importa os dados agora que temos o id_psicologo
+        if (this._backupParaImportar) {
+          const psi = this.authService.psicologoAtual();
+          if (psi) {
+            try {
+              await this.backupService.importar(this._backupParaImportar, psi.id_psicologo);
+            } catch { /* navega mesmo em caso de falha na importação */ }
+          }
+          this._backupParaImportar = null;
+        }
+        await this.router.navigate(['/principal/home']);
+      },
       error: (err: HttpErrorResponse) => {
         this.erro.set(
           err.status === 401
@@ -87,6 +184,13 @@ export class Login {
       },
     });
   }
+
+  irParaLogin(): void {
+    this.tipoBotao = 'login';
+    this.erro.set('');
+  }
+
+  // ─── Cadastro ────────────────────────────────────────────────────────────
 
   fazerCadastro(): void {
     if (this.cadastroForm.invalid) {
@@ -106,7 +210,10 @@ export class Login {
     };
 
     this.authService.register(data).subscribe({
-      next: () => this.router.navigate(['/principal/home']),
+      next: () => {
+        this.loading.set(false);
+        void this.router.navigate(['/principal/home']);
+      },
       error: (err: HttpErrorResponse) => {
         this.erro.set(
           err.status === 409
@@ -118,18 +225,105 @@ export class Login {
     });
   }
 
-  irParaLogin(): void {
-    this.tipoBotao = 'login';
-    this.erro.set('');
-  }
+  // ─── Restauração de backup ────────────────────────────────────────────────
 
-  irParaCadastro(): void {
+  semBackup(): void {
     this.tipoBotao = 'cadastro';
-    this.erro.set('');
+    this.erroRestauro.set('');
   }
 
-  voltarBotoes(): void {
-    this.tipoBotao = '';
-    this.erro.set('');
+  async restaurarComDrive(): Promise<void> {
+    this.carregandoDrive.set(true);
+    this.erroRestauro.set('');
+    try {
+      if (!this.googleDrive.conectado()) {
+        await this.googleDrive.conectar();
+      }
+      const lista = await this.googleDrive.listarBackups();
+      this.backupsDrive.set(lista);
+      if (lista.length === 0) {
+        this.erroRestauro.set('Nenhum backup encontrado nesta conta Google.');
+      }
+    } catch (err) {
+      this.erroRestauro.set(err instanceof Error ? err.message : 'Falha ao acessar o Drive.');
+    } finally {
+      this.carregandoDrive.set(false);
+    }
+  }
+
+  async selecionarBackupDrive(arquivo: DriveFile): Promise<void> {
+    this.carregandoDrive.set(true);
+    this.erroRestauro.set('');
+    try {
+      const backup = await this.googleDrive.baixarBackup(arquivo.id);
+      this.backupCarregado.set(backup);
+      this.tipoBotao = 'restaurar-senha';
+    } catch (err) {
+      this.erroRestauro.set(err instanceof Error ? err.message : 'Erro ao baixar backup.');
+    } finally {
+      this.carregandoDrive.set(false);
+    }
+  }
+
+  async onFileParaRestauro(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.erroRestauro.set('');
+    this.loading.set(true);
+    try {
+      const backup = await this.backupService.carregarArquivo(file);
+      this.backupCarregado.set(backup);
+      this.tipoBotao = 'restaurar-senha';
+    } catch (err) {
+      this.erroRestauro.set(err instanceof Error ? err.message : 'Arquivo inválido.');
+    } finally {
+      this.loading.set(false);
+      input.value = '';
+    }
+  }
+
+  confirmarRestauro(): void {
+    if (this.restaurarSenhaForm.invalid) {
+      this.restaurarSenhaForm.markAllAsTouched();
+      return;
+    }
+    const backup = this.backupCarregado();
+    if (!backup) return;
+
+    this.loading.set(true);
+    this.erroRestauro.set('');
+
+    const { senha } = this.restaurarSenhaForm.value as { senha: string };
+    try {
+      // Deriva a mesma chave que será usada após o login — sem precisar de rede
+      const chave = this.authService.derivarChave(senha, backup.psicologo_email);
+      const data = this.backupService.descriptografarBackup(backup, chave);
+
+      // Guarda os dados; serão importados para o Dexie após o login bem-sucedido
+      this._backupParaImportar = data;
+
+      // Pré-preenche email e redireciona para login
+      this.loginForm.patchValue({ email: backup.psicologo_email });
+      this.backupCarregado.set(null);
+      this.restaurarSenhaForm.reset();
+      this.tipoBotao = 'login';
+    } catch {
+      this.erroRestauro.set('Senha incorreta. Use a senha da sua conta NODUS.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  voltarParaRestauro(): void {
+    this.tipoBotao = 'restaurar';
+    this.backupCarregado.set(null);
+    this.erroRestauro.set('');
+    this.restaurarSenhaForm.reset();
+  }
+
+  formatarData(iso: string): string {
+    return new Date(iso).toLocaleString('pt-BR');
   }
 }

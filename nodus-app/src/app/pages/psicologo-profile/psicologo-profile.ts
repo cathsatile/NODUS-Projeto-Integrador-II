@@ -1,10 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-psicologo-profile',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './psicologo-profile.html',
   styleUrl: './psicologo-profile.scss',
 })
