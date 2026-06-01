@@ -77,6 +77,21 @@
 
     }
 
+    .search-input {
+        width: 100%;
+        max-width: 480px;
+        padding: 10px 14px;
+        border: 1px solid rgb(215, 215, 215);
+        border-radius: 10px;
+        background-color: white;
+        font-size: 14px;
+        font-family: 'DM Sans', sans-serif;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+        outline: none;
+
+        &:focus { border-color: var(--color-red); }
+    }
+
     .section-options {
         display: flex;
         flex-direction: row;
@@ -219,15 +234,33 @@
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    padding: 0px 10px;
+                    padding: 2px 10px;
                     border: solid 1px grey;
                     border-radius: 10px;
                     color: grey;
                     font-size: 12px;
+                    white-space: nowrap;
 
                     &.status-agendada {
                         border-color: var(--color-yellow, #f5a623);
                         color: var(--color-yellow, #f5a623);
+                    }
+                    &.status-realizada {
+                        border-color: #2e7d32;
+                        color: #2e7d32;
+                    }
+                    &.status-cancelada_paciente,
+                    &.status-cancelada_psicologo {
+                        border-color: var(--color-red);
+                        color: var(--color-red);
+                    }
+                    &.status-nao_compareceu {
+                        border-color: #856404;
+                        color: #856404;
+                    }
+                    &.status-remarcada {
+                        border-color: #3949ab;
+                        color: #3949ab;
                     }
                 }
             }

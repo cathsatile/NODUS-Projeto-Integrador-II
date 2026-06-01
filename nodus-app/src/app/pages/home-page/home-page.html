@@ -2,7 +2,6 @@
     <section class="first-section">
         <span>Bem-vindo de volta,</span>
         <h1>{{psiNome()}}</h1>
-
         <div class="num-sections">
             <img src="assets/images/calendar.svg">
             <span>{{sessaoHoje()}}</span>
@@ -30,7 +29,6 @@
                 </div>
             </div>
         </div>
-
         <div class="line">
             <button class="line-card special1" (click)="openModal('sessao')">
                 <img src="assets/images/plus.svg">
@@ -43,36 +41,78 @@
         </div>
     </section>
 
-    <section class="chart-section">
-        <div class="next-header">
-            <span>Evolução do Humor</span>
+    <!-- Card de emoções mais presentes no último mês -->
+    <section class="emocoes-section">
+        <div class="section-header">
+            <span>Emoções do último mês</span>
         </div>
-        <div class="chart-wrapper">
-            @if (!temDadosHumor()) {
-                <p class="chart-empty">Registre o humor nas sessões para ver a evolução</p>
-            }
-            <canvas #canvasHumor [hidden]="!temDadosHumor()"></canvas>
-        </div>
+        @if (!temDadosEmocao()) {
+            <div class="emocoes-empty">
+                <span>Registre emoções nas sessões para ver o panorama</span>
+            </div>
+        } @else {
+            <div class="emocoes-card">
+                @for (emocao of top3Emocoes(); track emocao.valor) {
+                    <div class="emocao-item">
+                        <span class="emocao-emoji">{{emocao.emoji}}</span>
+                        <div class="emocao-info">
+                            <span class="emocao-label">{{emocao.label}}</span>
+                            <div class="emocao-barra-track">
+                                <div class="emocao-barra" [style.width.%]="emocao.percentual"></div>
+                            </div>
+                        </div>
+                        <span class="emocao-pct">{{emocao.percentual}}%</span>
+                    </div>
+                }
+            </div>
+        }
     </section>
 
+    <!-- Sessões de hoje com marcação de status -->
     <section class="next-section">
         <div class="next-header">
-            <span>Próximas sessões</span>
+            <span>Sessões de hoje</span>
             <button (click)="goToSections()">
-                <span class="view-button">Ver todas </span>
+                <span>Ver todas</span>
                 <img src="assets/images/arrow.svg">
             </button>
         </div>
-        @if (proximasSessoes().length === 0) {
+
+        @if (sessoesHoje().length === 0) {
             <div class="next-container">
                 <img src="assets/images/calendar.svg">
-                <span>Nenhuma sessão agendada</span>
+                <span>Nenhuma sessão hoje</span>
             </div>
         } @else {
-            @for (sessao of proximasSessoes(); track sessao.id_sessao) {
-                <div class="next-container">
-                    <img src="assets/images/calendar.svg">
-                    <span>{{sessao.nomePaciente}} — {{sessao.data | date:'dd/MM/yyyy'}} às {{sessao.horario}}</span>
+            @for (sessao of sessoesHoje(); track sessao.id_sessao) {
+                <div class="sessao-hoje-card">
+                    <div class="sessao-info">
+                        <span class="sessao-nome">{{sessao.nomePaciente}}</span>
+                        <span class="sessao-hora">{{sessao.horario}}</span>
+                    </div>
+                    @if (!sessao.status && sessaoJaAconteceu(sessao.data, sessao.horario)) {
+                        <div class="sessao-actions">
+                            <button class="btn-realizada" (click)="marcarStatus(sessao.id_sessao!, 'realizada')">
+                                ✓ Realizada
+                            </button>
+                            <select class="status-select"
+                                (change)="marcarStatus(sessao.id_sessao!, $any($event.target).value)"
+                                [value]="''">
+                                <option value="" disabled>Não ocorreu...</option>
+                                @for (s of STATUS_SESSAO; track s.valor) {
+                                    @if (s.valor !== 'realizada') {
+                                        <option [value]="s.valor">{{s.label}}</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    } @else if (sessao.status) {
+                        <span class="status-badge status-{{sessao.status}}">
+                            {{statusLabel(sessao.status)}}
+                        </span>
+                    } @else {
+                        <span class="status-badge status-agendada">Agendada</span>
+                    }
                 </div>
             }
         }

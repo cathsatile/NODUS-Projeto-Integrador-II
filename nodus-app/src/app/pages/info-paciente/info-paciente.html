@@ -1,1 +1,66 @@
-<p>info-paciente works!</p>
+@if (paciente(); as psi) {
+<div class="info-container">
+
+    <div class="top-bar">
+        <button class="back-button" (click)="voltar()">
+            <img src="assets/images/arrow.svg" class="arrow-left">
+            Voltar
+        </button>
+    </div>
+
+    <div class="profile-card">
+        <div class="profile-avatar">{{ iniciais() }}</div>
+        <div class="profile-info">
+            <h1>{{ psi.nome }}</h1>
+            <span>{{ psi.email }}</span>
+        </div>
+    </div>
+
+    <div class="details-card">
+        <div class="detail-item">
+            <span class="detail-label">Data de Nascimento</span>
+            <span class="detail-value">{{ psi.data_nascimento | date:'dd/MM/yyyy' }}</span>
+        </div>
+    </div>
+
+    <div class="sessoes-section">
+        <h2>Sessões</h2>
+
+        @if (sessoesPaciente().length === 0) {
+            <div class="empty-state">
+                <img src="assets/images/calendar.svg">
+                <span>Nenhuma sessão registrada</span>
+            </div>
+        } @else {
+            @for (sessao of sessoesPaciente(); track sessao.id_sessao) {
+                <div class="sessao-card">
+                    <div class="sessao-header">
+                        <div class="sessao-data">
+                            <img src="assets/images/calendar.svg">
+                            <span>{{ sessao.data | date:'dd/MM/yyyy' }} às {{ sessao.horario }}</span>
+                        </div>
+                        <span class="sessao-humor">{{ humorLabel(sessao.humor) }}</span>
+                    </div>
+                    @if (sessao.observacoes) {
+                        <p class="sessao-obs">{{ sessao.observacoes }}</p>
+                    }
+                </div>
+            }
+        }
+    </div>
+
+</div>
+} @else {
+<div class="info-container">
+    <div class="top-bar">
+        <button class="back-button" (click)="voltar()">
+            <img src="assets/images/arrow.svg" class="arrow-left">
+            Voltar
+        </button>
+    </div>
+    <div class="empty-state">
+        <img src="assets/images/people.svg">
+        <span>Paciente não encontrado</span>
+    </div>
+</div>
+}

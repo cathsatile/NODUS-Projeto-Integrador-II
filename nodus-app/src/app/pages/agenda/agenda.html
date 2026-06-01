@@ -1,7 +1,7 @@
 <div class="agenda">
     <div class="agenda-header">
         <h1>Agenda</h1>
-        <button class="new-section">
+        <button class="new-section" (click)="openNovaSession()">
             <img src="assets/images/plus.svg">
             Nova sessão
         </button>
@@ -9,20 +9,52 @@
 
     <div class="calendar">
         <mat-card class="demo-inline-calendar-card">
-            <mat-calendar [(selected)]="selected"></mat-calendar>
+            <mat-calendar
+                [selected]="selected()"
+                [dateClass]="dateClass"
+                (selectedChange)="onDateSelected($event)">
+            </mat-calendar>
         </mat-card>
-        <p>Selected date: {{selected}}</p>
     </div>
 
-    <div class="section-container">
-        A(s) sessão(ões) em {{hoje | date:'dd/MM/yyyy'}}
-        <div class="section-card">
-            <img class="clock-icon" src="assets/images/clock.svg">
-            Nenhuma sessão neste dia
-            <button class="new-section">
-                <img src="assets/images/plus.svg">
-                Agendar sessão
-            </button>
-        </div>
+    <div class="legenda">
+        <span class="legenda-dot"></span>
+        <span>Dias com sessão agendada</span>
     </div>
+
+    @if (selected()) {
+        <div class="sessoes-dia">
+            <div class="sessoes-dia-header">
+                <span class="sessoes-dia-data">{{ dataSelecionada() }}</span>
+                @if (sessoesDia().length > 0) {
+                    <span class="sessoes-dia-count">{{ sessoesDia().length }} sessão(ões)</span>
+                }
+            </div>
+
+            @if (sessoesDia().length === 0) {
+                <div class="sessoes-dia-vazio">
+                    <span>Nenhuma sessão neste dia</span>
+                </div>
+            } @else {
+                @for (sessao of sessoesDia(); track sessao.id_sessao) {
+                    <div class="sessao-item">
+                        <div class="sessao-hora">{{ sessao.horario }}</div>
+                        <div class="sessao-detalhes">
+                            <span class="sessao-paciente">{{ sessao.nomePaciente }}</span>
+                            @if (sessao.humor != null) {
+                                <span class="sessao-emocao">
+                                    {{ emocaoEmoji(sessao.humor) }} {{ emocaoLabel(sessao.humor) }}
+                                </span>
+                            }
+                            @if (sessao.status) {
+                                <span class="sessao-status status-{{ sessao.status }}">
+                                    {{ statusLabel(sessao.status) }}
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
 </div>

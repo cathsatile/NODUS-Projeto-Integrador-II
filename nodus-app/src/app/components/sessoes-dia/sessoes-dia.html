@@ -1,0 +1,26 @@
+<div class="sessoes-dia-container">
+    <div class="dia-header">
+        <h2>{{ dialogData.data | date:'EEEE, dd/MM/yyyy' : '' : 'pt-BR' }}</h2>
+        <span>{{ dialogData.sessoes.length }} sessão(ões)</span>
+        <button mat-dialog-close class="close-btn">✕</button>
+    </div>
+
+    @for (sessao of dialogData.sessoes; track sessao.id_sessao) {
+        <div class="sessao-item">
+            <div class="sessao-hora">{{ sessao.horario }}</div>
+            <div class="sessao-detalhes">
+                <span class="sessao-paciente">{{ sessao.nomePaciente }}</span>
+                @if (sessao.humor != null) {
+                    <span class="sessao-emocao">
+                        {{ emocaoEmoji(sessao.humor) }} {{ emocaoLabel(sessao.humor) }}
+                    </span>
+                }
+                @if (sessao.status) {
+                    <span class="sessao-status status-{{ sessao.status }}">
+                        {{ statusLabel(sessao.status) }}
+                    </span>
+                }
+            </div>
+        </div>
+    }
+</div>

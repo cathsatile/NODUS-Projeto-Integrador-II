@@ -5,14 +5,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 25px;
+    gap: 20px;
     font-family: 'DM Sans', sans-serif;
     background-color: rgb(236, 236, 236);
 
-    img {
-        width: 20px;
-        height: 20px;
-    }
+    img { width: 20px; height: 20px; }
 
     .agenda-header {
         display: flex;
@@ -23,9 +20,7 @@
         max-width: 480px;
         padding: 10px;
 
-        h1 {
-            margin: 0;
-        }
+        h1 { margin: 0; }
 
         .new-section {
             display: flex;
@@ -38,12 +33,9 @@
             color: white;
             padding: 10px;
             gap: 10px;
-
-            img {
-                filter: brightness(0) invert(1);
-            }
+            cursor: pointer;
+            img { filter: brightness(0) invert(1); }
         }
-
     }
 
     .calendar {
@@ -54,51 +46,145 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         border-radius: 20px;
         padding: 10px;
+
+        // Hoje: borda quadrada vermelha
+        ::ng-deep .mat-calendar-body-cell-content.mat-calendar-body-today:not(.mat-calendar-body-selected) {
+            border: 2px solid var(--color-red) !important;
+            border-radius: 4px !important;
+            background: transparent !important;
+        }
+
+        // Selecionado: sublinhado (sem fundo)
+        ::ng-deep .mat-calendar-body-cell-content.mat-calendar-body-selected {
+            background-color: transparent !important;
+            border-radius: 0 !important;
+            text-decoration: underline !important;
+            text-underline-offset: 3px !important;
+            color: var(--color-red) !important;
+            box-shadow: none !important;
+            font-weight: 700;
+        }
+
+        // Dot marker laranja para dias com sessão
+        ::ng-deep .dia-com-sessao {
+            position: relative;
+
+            .mat-calendar-body-cell-content {
+                font-weight: 700;
+            }
+
+            &::after {
+                content: '';
+                position: absolute;
+                bottom: 4px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background-color: #ff8c00;
+            }
+        }
     }
 
-    .section-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: left;
+    .sessoes-dia {
         max-width: 480px;
         width: 100%;
-        gap: 10px;
-        color: grey;
+        background-color: white;
+        border-radius: 20px;
+        border: solid 1px rgb(233, 233, 233);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
 
-        .section-card {
-            background-color: white;
+        .sessoes-dia-header {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            padding: 15px;
-            gap: 10px;
-            border-radius: 20px;
-            color: grey;
+            margin-bottom: 12px;
 
-            .clock-icon {
-                width: 50px;
-                height: 50px;
-               filter: brightness(0) saturate(100%) invert(76%) sepia(12%) saturate(300%) hue-rotate(10deg) brightness(90%) contrast(85%);
+            .sessoes-dia-data {
+                font-size: 14px;
+                font-weight: 600;
+                text-transform: capitalize;
+                font-family: 'Playfair Display', serif;
             }
 
-            button {
-                border: solid 1px var(--color-red);
-                outline: none;
-                display: flex;
-                gap: 10px;
-                justify-content: center;
-                align-items: center;
-                border-radius: 10px;
-                padding: 10px;
-                color: var(--color-red);
+            .sessoes-dia-count {
+                font-size: 12px;
+                color: grey;
+            }
+        }
 
-                img {
-                    filter: brightness(0) saturate(100%) invert(24%) sepia(34%) saturate(2962%) hue-rotate(318deg) brightness(92%) contrast(90%);
+        .sessoes-dia-vazio {
+            padding: 20px 0;
+            text-align: center;
+            font-size: 13px;
+            color: #a08e87;
+        }
+
+        .sessao-item {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-top: 1px solid rgb(240, 240, 240);
+
+            &:first-of-type { border-top: none; }
+
+            .sessao-hora {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--color-red);
+                min-width: 44px;
+            }
+
+            .sessao-detalhes {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+
+                .sessao-paciente {
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                .sessao-emocao {
+                    font-size: 12px;
+                    color: grey;
+                }
+
+                .sessao-status {
+                    font-size: 11px;
+                    font-weight: 500;
+                    padding: 2px 8px;
+                    border-radius: 20px;
+                    align-self: flex-start;
+
+                    &.status-realizada           { background-color: #d2f3d9; color: #2e7d32; }
+                    &.status-cancelada_paciente,
+                    &.status-cancelada_psicologo { background-color: #fedce2; color: #c3334b; }
+                    &.status-nao_compareceu      { background-color: #fff3cd; color: #856404; }
+                    &.status-remarcada           { background-color: #e8eaf6; color: #3949ab; }
                 }
             }
+        }
+    }
+
+    .legenda {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: grey;
+
+        .legenda-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ff8c00;
+            flex-shrink: 0;
         }
     }
 }

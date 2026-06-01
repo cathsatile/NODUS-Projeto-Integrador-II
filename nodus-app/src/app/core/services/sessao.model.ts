@@ -4,6 +4,7 @@ export interface Sessao {
   horario: string;
   observacoes?: string;
   humor?: number;
+  status?: string;
   id_paciente: number;
   id_psicologo: number;
 }

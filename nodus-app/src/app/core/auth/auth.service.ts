@@ -2,6 +2,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map } from 'rxjs';
 import * as CryptoJS from 'crypto-js';
+import { environment } from '../../../environments/environment';
 
 export interface PsicologoPublico {
   id_psicologo: number;
@@ -31,21 +32,19 @@ interface JwtPayload {
   iat: number;
 }
 
-// Salt fixo por usuário seria ideal (Sprint 4), por ora usa salt da aplicação
-const CRIPTO_SALT = 'NODUS_CRIPTO_SALT_2026';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly TOKEN_KEY = 'nodus_auth_token';
-  private readonly CHAVE_KEY = 'nodus_chave_cripto';
-  private readonly API_URL = 'http://localhost:3000/api/auth';
+  private readonly API_URL = `${environment.apiUrl}/auth`;
 
   private readonly _psicologoAtual = signal<PsicologoPublico | null>(null);
   private readonly _chaveCripto = signal<string | null>(null);
 
   readonly psicologoAtual = this._psicologoAtual.asReadonly();
   readonly chaveCripto = this._chaveCripto.asReadonly();
-  readonly isAuthenticated = computed(() => !!this._psicologoAtual());
+
+  // Requer tanto identidade (JWT) quanto chave de criptografia derivada da senha
+  readonly isAuthenticated = computed(() => !!this._psicologoAtual() && !!this._chaveCripto());
 
   constructor(private http: HttpClient) {
     this.inicializarSessao();
@@ -61,12 +60,9 @@ export class AuthService {
         email: payload.email,
         registro_profissional: payload.registro_profissional,
       });
-      // Restaura chave derivada da sessão atual do navegador
-      const chave = sessionStorage.getItem(this.CHAVE_KEY);
-      if (chave) this._chaveCripto.set(chave);
+      // chaveCripto não é restaurada — usuário precisa fazer login para re-derivar a chave
     } else {
       localStorage.removeItem(this.TOKEN_KEY);
-      sessionStorage.removeItem(this.CHAVE_KEY);
     }
   }
 
@@ -90,7 +86,6 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
-    sessionStorage.removeItem(this.CHAVE_KEY);
     this._psicologoAtual.set(null);
     this._chaveCripto.set(null);
   }
@@ -102,17 +97,17 @@ export class AuthService {
   private salvarSessao(res: AuthResponse, senha: string): void {
     localStorage.setItem(this.TOKEN_KEY, res.token);
     this._psicologoAtual.set(res.psicologo);
-    const chave = this.derivarChave(senha);
-    this._chaveCripto.set(chave);
-    // sessionStorage: persiste enquanto a aba estiver aberta, limpa ao fechar
-    sessionStorage.setItem(this.CHAVE_KEY, chave);
+    // Chave fica apenas em memória (signal) — nunca persiste em storage
+    this._chaveCripto.set(this.derivarChave(senha, res.psicologo.email));
   }
 
-  // PBKDF2: deriva uma chave AES-256 a partir da senha do usuário
-  private derivarChave(senha: string): string {
-    return CryptoJS.PBKDF2(senha, CRIPTO_SALT, {
-      keySize: 256 / 32,  // 256 bits
-      iterations: 1000,
+  // PBKDF2: deriva chave AES-256 a partir da senha + salt único por usuário (email).
+  // 100.000 iterações conforme recomendação NIST SP 800-132 (2023) para PBKDF2-SHA1.
+  private derivarChave(senha: string, email: string): string {
+    const saltUsuario = `NODUS:${email}:2026`;
+    return CryptoJS.PBKDF2(senha, saltUsuario, {
+      keySize: 256 / 32,
+      iterations: 100_000,
     }).toString();
   }
 
@@ -128,6 +123,7 @@ export class AuthService {
   private parseToken(token: string): JwtPayload {
     const partes = token.split('.');
     if (partes.length !== 3) throw new Error('Token inválido');
-    return JSON.parse(atob(partes[1])) as JwtPayload;
+    const base64 = partes[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64)) as JwtPayload;
   }
 }

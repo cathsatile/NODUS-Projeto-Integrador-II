@@ -5,20 +5,22 @@
                 <h1>Pacientes</h1>
                 <p>{{numPacientes()}} pacientes ativos</p>
             </div>
-            <button class="new-paciente">
+            <button class="new-paciente" (click)="openModal()">
                 <img src="assets/images/plus.svg">
                 Novo
             </button>
         </div>
         <div class="header-bottom">
             <img src="assets/images/search.svg">
-            <input placeholder="Buscar pacientes...">
+            <input placeholder="Buscar pacientes..."
+                   [value]="busca()"
+                   (input)="busca.set($any($event.target).value)">
         </div>
     </div>
 
     <div class="pacientes-list">
-        @for (paciente of pacienteService.pacientes(); track paciente.id_paciente) {
-            <div class="paciente-card">
+        @for (paciente of pacientesFiltrados(); track paciente.id_paciente) {
+            <div class="paciente-card" (click)="verPaciente(paciente.id_paciente)" style="cursor:pointer">
                 <div class="card-top">
                     <div class="left-info">
                         <div class="profile-icon">

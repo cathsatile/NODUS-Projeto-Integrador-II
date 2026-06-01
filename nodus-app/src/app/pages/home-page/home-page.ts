@@ -1,35 +1,30 @@
-import { DatePipe } from '@angular/common';
-import { AfterViewInit, Component, computed, effect, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { Chart, registerables } from 'chart.js';
 import { AddSectionPaciente } from '../../components/add-section-paciente/add-section-paciente';
 import { AuthService } from '../../core/auth/auth.service';
+import { emocaoEmoji, emocaoLabel, statusLabel, STATUS_SESSAO } from '../../core/services/emocoes';
+import { Sessao } from '../../core/services/sessao.model';
 import { PacienteService } from '../../core/services/paciente.service';
 import { SessaoService } from '../../core/services/sessao.service';
 
-Chart.register(...registerables);
-
-const HUMOR_EMOJI: Record<number, string> = { 1: '😢', 2: '😟', 3: '😐', 4: '😊', 5: '😆' };
-
 @Component({
   selector: 'app-home-page',
-  imports: [MatDialogModule, DatePipe],
+  imports: [MatDialogModule],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
-export class HomePage implements OnInit, AfterViewInit, OnDestroy {
+export class HomePage implements OnInit {
   private authService = inject(AuthService);
   private pacienteService = inject(PacienteService);
   private sessaoService = inject(SessaoService);
   private dialog = inject(MatDialog);
   private router = inject(Router);
 
-  @ViewChild('canvasHumor') canvasRef!: ElementRef<HTMLCanvasElement>;
-  private grafico?: Chart;
+  readonly STATUS_SESSAO = STATUS_SESSAO;
+  readonly statusLabel = statusLabel;
 
   readonly psiNome = computed(() => this.authService.psicologoAtual()?.nome ?? '');
-
   readonly numPacientes = computed(() => this.pacienteService.pacientes().length);
 
   readonly numSessoesMes = computed(() => {
@@ -40,57 +35,54 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     }).length;
   });
 
-  readonly sessaoHoje = computed(() => {
-    const hoje = new Date();
-    const count = this.sessaoService.sessoes().filter(s =>
-      new Date(s.data).toDateString() === hoje.toDateString()
-    ).length;
-    if (count === 0) return 'Nenhuma sessão hoje';
-    return count === 1 ? '1 sessão hoje' : `${count} sessões hoje`;
-  });
-
-  readonly proximasSessoes = computed(() => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+  readonly sessoesHoje = computed(() => {
+    const hoje = new Date().toDateString();
     const pacientes = this.pacienteService.pacientes();
     return this.sessaoService.sessoes()
-      .filter(s => new Date(s.data) >= hoje)
-      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
-      .slice(0, 3)
+      .filter(s => new Date(s.data).toDateString() === hoje)
+      .sort((a, b) => (a.horario ?? '').localeCompare(b.horario ?? ''))
       .map(s => ({
         ...s,
         nomePaciente: pacientes.find(p => p.id_paciente === s.id_paciente)?.nome ?? 'Paciente',
       }));
   });
 
-  // Últimas 15 sessões com humor registrado, ordenadas do mais antigo ao mais recente
-  readonly dadosGrafico = computed(() => {
-    const sessoes = this.sessaoService.sessoes()
-      .filter(s => s.humor != null)
-      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
-      .slice(-15);
-
-    return {
-      labels: sessoes.map(s => {
-        const d = new Date(s.data);
-        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-      }),
-      valores: sessoes.map(s => s.humor!),
-    };
+  readonly sessaoHoje = computed(() => {
+    const count = this.sessoesHoje().length;
+    if (count === 0) return 'Nenhuma sessão hoje';
+    return count === 1 ? '1 sessão hoje' : `${count} sessões hoje`;
   });
 
-  readonly temDadosHumor = computed(() => this.dadosGrafico().valores.length > 0);
+  // Top-3 emoções mais presentes no último mês
+  readonly top3Emocoes = computed(() => {
+    const umMesAtras = new Date();
+    umMesAtras.setMonth(umMesAtras.getMonth() - 1);
 
-  constructor() {
-    // Atualiza o gráfico reativamente sempre que os dados mudarem
-    effect(() => {
-      const dados = this.dadosGrafico();
-      if (!this.grafico) return;
-      this.grafico.data.labels = dados.labels;
-      this.grafico.data.datasets[0].data = dados.valores;
-      this.grafico.update('none');
-    });
-  }
+    const sessoesComHumor = this.sessaoService.sessoes()
+      .filter(s => s.humor != null && new Date(s.data) >= umMesAtras);
+
+    const total = sessoesComHumor.length;
+    if (total === 0) return [];
+
+    const contagem: Record<number, number> = {};
+    for (const s of sessoesComHumor) {
+      const h = s.humor!;
+      contagem[h] = (contagem[h] ?? 0) + 1;
+    }
+
+    return Object.entries(contagem)
+      .map(([valor, count]) => ({
+        valor: Number(valor),
+        count,
+        percentual: Math.round((count / total) * 100),
+        label: emocaoLabel(Number(valor)),
+        emoji: emocaoEmoji(Number(valor)),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  });
+
+  readonly temDadosEmocao = computed(() => this.top3Emocoes().length > 0);
 
   ngOnInit(): void {
     const psi = this.authService.psicologoAtual();
@@ -99,54 +91,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
     this.sessaoService.getByPsicologo(psi.id_psicologo).subscribe();
   }
 
-  ngAfterViewInit(): void {
-    const dados = this.dadosGrafico();
-    this.grafico = new Chart(this.canvasRef.nativeElement, {
-      type: 'line',
-      data: {
-        labels: dados.labels,
-        datasets: [{
-          data: dados.valores,
-          borderColor: '#c3334b',
-          backgroundColor: 'rgba(195, 51, 75, 0.08)',
-          tension: 0.4,
-          fill: true,
-          pointBackgroundColor: '#c3334b',
-          pointRadius: 5,
-          pointHoverRadius: 7,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => HUMOR_EMOJI[ctx.parsed.y as number] ?? String(ctx.parsed.y),
-            },
-          },
-        },
-        scales: {
-          y: {
-            min: 1,
-            max: 5,
-            ticks: {
-              stepSize: 1,
-              callback: val => HUMOR_EMOJI[val as number] ?? '',
-            },
-            grid: { color: 'rgba(0,0,0,0.05)' },
-          },
-          x: {
-            grid: { display: false },
-          },
-        },
-      },
-    });
+  sessaoJaAconteceu(data: string, horario: string | null | undefined): boolean {
+    const dateStr = data.slice(0, 10);
+    const timeStr = horario ?? '23:59';
+    return new Date(`${dateStr}T${timeStr}:00`) <= new Date();
   }
 
-  ngOnDestroy(): void {
-    this.grafico?.destroy();
+  marcarStatus(id_sessao: number, status: string): void {
+    this.sessaoService.update(id_sessao, { status } as Partial<Sessao>).subscribe();
   }
 
   goToSections(): void {

@@ -1,7 +1,7 @@
 # NODUS — Sistema de Gestão Clínica e Monitoramento Terapêutico
 
 ## Visão Geral do Projeto
-NODUS é um app Mobile-First para gestão clínica de psicólogos. Roda em WebView via **Capacitor**. Prioridade absoluta: segurança dos dados clínicos (LGPD) e funcionamento offline.
+NODUS é um app Mobile-First para gestão clínica de psicólogos. Roda em WebView via **Capacitor** no Android. Prioridade absoluta: segurança dos dados clínicos (LGPD) e funcionamento offline.
 
 ---
 
@@ -19,14 +19,16 @@ NODUS é um app Mobile-First para gestão clínica de psicólogos. Roda em WebVi
 ```
 src/app/
   ├── core/
-  │   ├── auth/          # AuthService (sessão + JWT + sinal psicologoAtual)
+  │   ├── auth/          # AuthService (sessão + JWT + sinal psicologoAtual + chave AES em memória)
   │   ├── guards/        # authGuard (CanActivateFn)
   │   ├── interceptors/  # authInterceptor (Bearer token + logout em 401)
-  │   ├── databse/       # DbService — Dexie.js (offline IndexedDB)
-  │   └── services/      # CryptoService, PacienteService, SessaoService, PsicologoService
-  ├── pages/             # Login, Principal, HomePage, Pacientes, Agenda, Sections, InfoPaciente, PsicologoProfile
-  ├── components/        # Header, Navbar, AddSectionPaciente, SectionResume
-  └── services/          # Re-exports de core/auth (manter para compatibilidade)
+  │   ├── database/      # DbService — Dexie.js (offline IndexedDB, schema v3)
+  │   └── services/      # CryptoService, PacienteService, SessaoService, PsicologoService,
+  │                      # NetworkStatusService, emocoes.ts
+  ├── pages/             # Login, Principal, HomePage, Pacientes, Agenda, Sections,
+  │                      # InfoPaciente, PsicologoProfile
+  ├── components/        # Header, Navbar, AddSectionPaciente, SessoesDia
+  └── environments/      # environment.ts (dev), environment.prod.ts (prod)
 ```
 
 **Regra de dependência**: `pages/` e `components/` importam de `core/`. Nunca o inverso.
@@ -50,81 +52,124 @@ DB_PASSWORD=<senha_local>
 DB_NAME=nodus
 JWT_SECRET=nodus_local_secret_2026
 PORT=3000
+FRONTEND_ORIGIN=http://localhost:4200,https://localhost,capacitor://localhost
 ```
+
+> `FRONTEND_ORIGIN` aceita múltiplas origens separadas por vírgula. Necessário para o Capacitor WebView (`https://localhost`) e o browser de dev (`http://localhost:4200`).
 
 ### Frontend
 - **Framework**: Angular 21, Standalone Components, Signals
 - **Porta**: 4200
 - **Rodar**: `npm start` na raiz de `nodus-app/`
+- **Build**: `npm run build`
+- **Sync Android**: `npx cap sync android`
 
-### Banco de Dados (schema atual)
+### Banco de Dados (schema atual — com migrations aplicadas)
+
 ```sql
 CREATE TABLE psicologo (
   id_psicologo          SERIAL PRIMARY KEY,
   nome                  VARCHAR(150) NOT NULL,
   email                 VARCHAR(150) NOT NULL UNIQUE,
-  senha                 TEXT NOT NULL,          -- bcrypt hash
+  senha                 TEXT NOT NULL,           -- bcrypt hash
   registro_profissional VARCHAR(50)  NOT NULL
 );
 
 CREATE TABLE paciente (
   id_paciente     SERIAL PRIMARY KEY,
-  nome            VARCHAR(150) NOT NULL,
-  email           VARCHAR(150) NOT NULL,
-  senha           TEXT NOT NULL,
-  data_nascimento DATE NOT NULL,
+  nome            TEXT NOT NULL,                 -- AES-256 base64
+  email           TEXT NOT NULL,                 -- AES-256 base64
+  senha           TEXT,                          -- nullable: pacientes não fazem login
+  data_nascimento TEXT NOT NULL,                 -- AES-256 base64
   id_psicologo    INTEGER NOT NULL REFERENCES psicologo(id_psicologo)
 );
 
 CREATE TABLE sessao (
   id_sessao    SERIAL PRIMARY KEY,
   data         TIMESTAMP NOT NULL,
-  observacoes  TEXT,
+  horario      VARCHAR(5),                       -- formato HH:MM
+  observacoes  TEXT,                             -- AES-256 base64
+  humor        INTEGER,                          -- 1-11 (ver emocoes.ts)
+  status       VARCHAR(50),                      -- realizada | cancelada_paciente |
+                                                 -- cancelada_psicologo | nao_compareceu | remarcada
   id_paciente  INTEGER NOT NULL REFERENCES paciente(id_paciente),
   id_psicologo INTEGER NOT NULL REFERENCES psicologo(id_psicologo)
 );
 ```
 
----
-
-## O que já foi implementado (estado atual)
-
-### Sprint 0 — Alicerce (concluído)
-- `DbService` com Dexie.js (instalado, estrutura criada — integração pendente)
-- `CryptoService` com AES-256 (instalado, estrutura criada — integração pendente)
-
-### Sprint 1 — Autenticação de ponta a ponta (concluído)
-- **Backend — módulo `auth`**:
-  - `POST /api/auth/login` — valida credenciais com bcrypt, retorna JWT de 8h
-  - `POST /api/auth/register` — cria psicólogo com hash de senha, retorna JWT
-  - `psicologo.repository.ts` — adicionado `findByEmail` (inclui hash para comparação)
-- **Frontend — `core/auth/auth.service.ts`**:
-  - Signals `psicologoAtual` (readonly) e `isAuthenticated` (computed)
-  - `login()`, `register()`, `logout()` — gerenciam JWT no localStorage
-  - `inicializarSessao()` no construtor — restaura sessão validando expiração do JWT
-- **Frontend — `core/guards/auth.guard.ts`**:
-  - `CanActivateFn` protege `/principal` — redireciona para `/login` se não autenticado
-- **Frontend — `core/interceptors/auth.interceptor.ts`**:
-  - Injeta `Authorization: Bearer <token>` em todas as requisições
-  - Em 401 fora de rotas `/api/auth`, faz logout automático e redireciona
-- **Frontend — `pages/login/login.ts`**:
-  - `FormBuilder` inicializa `loginForm` e `cadastroForm` com `Validators`
-  - Signals `loading` e `erro` para feedback visual
-  - `fazerLogin()` e `fazerCadastro()` chamam `AuthService` e navegam para `/principal/home`
-  - Validator customizado `senhasIguaisValidator`
-- **`app.routes.ts`** — guard aplicado em `/principal`, redirect padrão `**` → `/login`
-- **`app.config.ts`** — `provideHttpClient(withInterceptors([authInterceptor]))`
-- **`principal.routes.ts`** — migrado de `@NgModule` para array standalone `principalRoutes`
+> As migrations são aplicadas automaticamente no startup do backend (`backend/src/database/db.ts`). Não é necessário rodar SQL manualmente.
 
 ---
 
-## Modelos de Dados (Tabelas Dexie.js — integração pendente)
+## Estado Atual — Tudo Implementado
 
-As tabelas do banco local são: `psicologo`, `paciente`, `sessao`, `humor`.
+### Autenticação
+- `POST /api/auth/login` e `POST /api/auth/register` com JWT de 8h e bcrypt
+- Guard `authGuard` protege `/principal`; interceptor injeta Bearer token
+- PBKDF2 com 100.000 iterações deriva a chave AES-256 da senha no login
+- Chave AES existe apenas em memória (signal `_chaveCripto`); nunca em localStorage
 
-- Campos clínicos sensíveis (notas, diagnósticos, humor) devem ser armazenados como string AES-256 cifrada.
-- Campos de identificação (nome, CPF, contato) também são sensíveis — criptografar antes de persistir.
-- IDs são gerados localmente (UUID) para suportar operações offline.
+### Segurança (Backend)
+- `authMiddleware` JWT aplicado em todas as rotas protegidas
+- Controllers verificam posse: psicólogo só acessa seus próprios pacientes/sessões
+- CORS multi-origem via `FRONTEND_ORIGIN` no `.env`
+- `capacitor.config.ts`: `allowMixedContent: true` para WebView Android
+
+### Offline-First (Dexie.js — schema v3)
+- `PacienteService`: cache-first — lê do Dexie, sincroniza em background; create/update/delete gravam localmente
+- `SessaoService`: idem; `update()` persiste status, humor e observacoes no IndexedDB
+- `NetworkStatusService`: signal `isOnline` reativo a eventos `online`/`offline`
+- Header exibe banner "Sem conexão..." automaticamente quando offline
+
+### Emoções Clínicas (`core/services/emocoes.ts`)
+Arquivo central com 11 emoções clínicas e 5 status de sessão. **Não duplicar esta lógica em componentes.**
+
+```
+Emoções (campo humor: number 1-11):
+  1-Alegre  2-Confiante  3-Esperançoso  4-Tranquilo  5-Ansioso
+  6-Confuso  7-Existencialista  8-Frustrado  9-Nervoso  10-Sobrecarregado  11-Triste
+
+Status de sessão (campo status: string):
+  realizada | cancelada_paciente | cancelada_psicologo | nao_compareceu | remarcada
+```
+
+Funções exportadas: `emocaoLabel(valor)`, `emocaoEmoji(valor)`, `statusLabel(valor)`, constante `EMOCOES`, constante `STATUS_SESSAO`.
+
+### Home Page
+- Boas-vindas com nome do psicólogo e contagem de sessões do dia
+- Grid de atalhos: nova sessão, novo paciente, total de pacientes, sessões do mês
+- Seção "Emoções do último mês": top 3 com barras de progresso e percentual
+- Seção "Sessões de hoje": lista ordenada por horário
+  - Botões "Realizada / Não ocorreu" aparecem **somente após o horário da sessão ter passado**
+  - Antes do horário: badge "Agendada"
+  - Após marcar: badge colorido com o status
+
+### Agenda
+- Calendário `MatCalendar` com marcadores visuais via `::ng-deep`:
+  - **Hoje**: borda quadrada vermelha
+  - **Selecionado**: sublinhado (sem fundo preenchido)
+  - **Dias com sessão**: ponto laranja abaixo do número
+- Ao clicar em um dia, as sessões aparecem **inline abaixo do calendário** (não modal):
+  - Exibe horário, nome do paciente, emoção e badge de status
+  - "Nenhuma sessão neste dia" se o dia estiver vazio
+- Botão "Nova sessão" abre `AddSectionPaciente`
+
+### Formulário de Nova Sessão (`AddSectionPaciente`)
+- Formulário único sem stepper
+- Campo de emoção aparece somente quando `new Date('${data}T${horario}:00') <= new Date()`
+  (exige data **e** horário preenchidos e já passados)
+- Cadastro de paciente sem campo senha
+
+### Tela de Sessões (`sections`)
+- Campo de busca por nome de paciente (filtra todas as abas)
+- Abas: Todas · Realizadas · Agendadas · **Não realizadas**
+  - "Não realizadas" = sessões com status definido e diferente de 'realizada'
+- Paginação independente por aba (PAGE_SIZE = 10)
+- Badge de status colorido para cada tipo
+
+### Tela de Informações do Paciente (`InfoPaciente`)
+- Lista todas as sessões do paciente, ordenadas por data decrescente
+- Exibe emoção (emoji + label) e status usando `emocoes.ts`
 
 ---
 
@@ -132,79 +177,50 @@ As tabelas do banco local são: `psicologo`, `paciente`, `sessao`, `humor`.
 
 ### Signals
 - Use `signal()` para estado local do componente.
-- Use `computed()` para derivar dados descriptografados ou transformados — especialmente ao alimentar gráficos no Dashboard.
-- Use `effect()` apenas para side effects explícitos (ex: persistência após mudança de estado).
+- Use `computed()` para derivar dados — listas filtradas, totais, formatações.
+- Use `effect()` apenas para side effects explícitos.
 
 ### Serviços
-- `CryptoService`: única responsabilidade é cifrar/decifrar strings com AES-256. Nunca acessa o Dexie diretamente.
-- `DbService`: única responsabilidade é ler/escrever no Dexie.js. Nunca cifra por conta própria — recebe dados já cifrados.
-- `AuthService` (`core/auth/`): gerencia sessão do psicólogo logado. Expõe a chave de criptografia derivada da senha (nunca a salva em texto plano).
+- `CryptoService`: cifra/decifra strings AES-256. Nunca acessa o Dexie diretamente.
+- `DbService`: lê/escreve no Dexie.js. Nunca cifra por conta própria.
+- `AuthService`: gerencia sessão e chave AES em memória. Nunca expõe a chave em texto plano.
+- `emocoes.ts`: fonte única de verdade para emoções e status. Nunca duplicar listas de emoções em componentes.
 
 ### Componentes
-- Componentes NÃO fazem chamadas diretas ao DbService ou CryptoService — usam um Service de feature intermediário (ex: `PacienteService`, `SessaoService`).
-- Formulários usam Reactive Forms com Signals para controle de estado de UI (loading, etapa atual do stepper, erros).
-- Re-exports de tipo em `isolatedModules: true` exigem `export type { ... }` — não misturar com `export { ... }`.
+- Componentes NÃO fazem chamadas diretas ao DbService ou CryptoService.
+- Formulários usam Reactive Forms + Signals para loading/erro.
+- Não use `DatePipe` com locale `'pt-BR'` — o locale não está registrado no `app.config.ts`. Formate datas manualmente ou use `slice(0,10)`.
 
 ### UX Mobile
-- Formulários longos devem usar **Stepper** (etapas) para não sobrecarregar o usuário.
-- Inputs devem ser limpos, com espaçamento generoso para toque.
-- Feedback visual imediato em todas as ações (loading state, sucesso, erro).
+- Inputs com espaçamento generoso para toque.
+- Feedback visual imediato em todas as ações (loading, sucesso, erro).
+- Modais usam `position: { bottom: '0' }` e `panelClass: 'bottom-modal'` para sheet behavior.
 
 ### Performance
-- Descriptografar grandes listas no fio principal pode congelar a tela. Use **paginação** ao listar histórico de sessões/humor.
-- Se o volume de registros for massivo, use **Web Workers** para descriptografar fora do fio principal.
+- Listas de sessões/pacientes usam paginação (PAGE_SIZE = 10 com "Ver mais").
+- `sessoesFiltradas` em sections.ts é um `computed()` que reage ao signal `busca` — não filtrar no template.
 
 ---
 
 ## Integrações Nativas (Capacitor)
 
-- **Camera**: usado para digitalizar documentos físicos. O texto extraído é anexado diretamente às notas da sessão como campo criptografado.
-- Sempre verificar permissões nativas antes de acionar plugins Capacitor.
-- Tratar erros de plugins nativos explicitamente (usuário negou permissão, hardware indisponível).
+- App configurado para Android: `capacitor.config.ts` com `allowMixedContent: true`
+- Backend acessível pelo celular via IP da máquina (configurado em `environment.ts`)
+- **Camera**: planejada para digitalizar documentos — não implementada ainda
 
----
-
-## Roadmap até simulação no celular
-
-### Próximo — Sprint 2: Conectar UI aos dados reais
-- [ ] Remover dados hardcoded de `home-page`, `header` e `pacientes` — injetar `AuthService` e `PacienteService`
-- [ ] `home-page`: exibir nome do psicólogo logado via `authService.psicologoAtual().nome`
-- [ ] `header`: exibir iniciais reais do psicólogo via `computed()`
-- [ ] Tela de pacientes: listar pacientes reais do psicólogo logado (`PacienteService.getByPsicologo()`)
-- [ ] Formulário de cadastro de paciente com Stepper (Sprint 2 do roadmap original)
-- [ ] Botão de logout no perfil do psicólogo
-
-### Sprint 3: Criptografia + Offline-First
-- [ ] Integrar `CryptoService` no `PacienteService` e `SessaoService` — cifrar antes de salvar
-- [ ] Derivar chave AES-256 da senha do usuário via PBKDF2 no `AuthService` (remover chave hardcoded do `CryptoService`)
-- [ ] Integrar `DbService` (Dexie.js): salvar dados criptografados localmente antes de tentar sync com backend
-- [ ] Registro de sessões com campos: data, horário, observações (criptografado), humor
-- [ ] Paginação na listagem de sessões
-
-### Sprint 4: Dashboard
-- [ ] Tela de dashboard com gráficos de humor ao longo do tempo
-- [ ] Usar `computed()` para descriptografar dados reativamente antes de alimentar gráficos
-- [ ] Integração com Camera (Capacitor) para digitalizar documentos
-
-### Sprint 5: Build Capacitor e simulação no celular
-1. **Instalar Capacitor**: `npm install @capacitor/core @capacitor/cli`
-2. **Inicializar**: `npx cap init` (define nome do app e bundle ID)
-3. **Adicionar plataforma Android**: `npm install @capacitor/android && npx cap add android`
-4. **Build do Angular**: `npm run build` (gera `dist/`)
-5. **Sync para Capacitor**: `npx cap sync android`
-6. **Abrir no Android Studio**: `npx cap open android`
-7. **Rodar no emulador ou celular físico**: dentro do Android Studio → Run
-   - Para celular físico: habilitar **Modo Desenvolvedor** + **Depuração USB** no Android, conectar via USB
-   - Backend precisa estar acessível na rede local: trocar `localhost:3000` pela IP da máquina (ex: `192.168.1.x:3000`)
-
-> **Atenção para o Capacitor**: a URL da API em `core/auth/auth.service.ts` e demais services usa `http://localhost:3000`. No celular físico/emulador, `localhost` aponta para o próprio dispositivo. Criar um `environment.ts` com a URL correta para cada ambiente (dev browser vs. Capacitor).
+### Fluxo de deploy para o celular
+```bash
+npm run build          # gera dist/
+npx cap sync android   # copia assets para o projeto Android
+npx cap open android   # abre no Android Studio para rodar
+```
 
 ---
 
 ## Convenções Gerais
 
-- Idioma do código: **inglês** (nomes de variáveis, métodos, classes).
+- Idioma do código: **inglês** (variáveis, métodos, classes).
 - Comentários e commits: **português**.
 - Nunca use `any` no TypeScript — sempre tipar explicitamente.
 - Nunca faça `console.log` de dados clínicos descriptografados.
-- Ao concluir uma tarefa, sinalize claramente o que foi feito e o próximo passo sugerido dentro do roadmap.
+- Comparação de datas de sessão: use `toDateKey(new Date(s.data))` (getFullYear/Month/Date) para evitar bugs de fuso horário. Não use `new Date(s.data).toLocaleDateString()` nem `s.data.slice(0,10)` para comparar com datas locais do calendário.

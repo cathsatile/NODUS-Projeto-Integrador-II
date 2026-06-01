@@ -10,14 +10,14 @@ export class CryptoService {
     return CryptoJS.AES.encrypt(data, chave).toString();
   }
 
-  // Retorna o texto original se não conseguir decifrar (dados ainda não criptografados)
+  // Lança erro se o ciphertext for inválido ou a chave estiver errada.
+  // Callers devem tratar o erro e exibir um estado de falha ao usuário.
   decrypt(ciphertext: string, chave: string): string {
-    try {
-      const bytes = CryptoJS.AES.decrypt(ciphertext, chave);
-      const resultado = bytes.toString(CryptoJS.enc.Utf8);
-      return resultado || ciphertext;
-    } catch {
-      return ciphertext;
+    const bytes = CryptoJS.AES.decrypt(ciphertext, chave);
+    const resultado = bytes.toString(CryptoJS.enc.Utf8);
+    if (!resultado) {
+      throw new Error('Falha ao decifrar: chave incorreta ou dado corrompido');
     }
+    return resultado;
   }
 }

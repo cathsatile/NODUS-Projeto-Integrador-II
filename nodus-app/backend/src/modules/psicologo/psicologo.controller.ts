@@ -1,32 +1,12 @@
-/*
-feito com ajuda do claude principalmente no quesito de assincronia
-esse arquivo serve pra receber as requisições e devolver respostas. É um grande porteiro. Repare que tá tudo em trycatch
-status HTTP que tão sendo usados:
-|CÓD. ||              SIGNIFICADO              |
-|200  -- OK (padrão)                           |
-|201  -- Criado com sucesso                    |
-|204  -- Sucesso sem conteúdo (usado no DELETE)|
-|404  -- Não encontrado                        |
-|500  -- Erro interno do servidor              |
-*/
-
 import { Router, Request, Response } from 'express';
 import * as service from './psicologo.service';
 
 export const psicologoRouter = Router();
 
-psicologoRouter.get('/', async (_req: Request, res: Response) => {
+// Retorna os dados do próprio psicólogo autenticado
+psicologoRouter.get('/me', async (req: Request, res: Response) => {
   try {
-    const data = await service.getAll();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar psicólogos' });
-  }
-});
-
-psicologoRouter.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const data = await service.getById(Number(req.params.id));
+    const data = await service.getById(req.psicologoId);
     if (!data) return res.status(404).json({ error: 'Psicólogo não encontrado' });
     res.json(data);
   } catch (err) {
@@ -34,19 +14,25 @@ psicologoRouter.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-psicologoRouter.post('/', async (req: Request, res: Response) => {
+psicologoRouter.get('/:id', async (req: Request, res: Response) => {
   try {
-    const data = await service.create(req.body);
-    res.status(201).json(data);
+    if (Number(req.params.id) !== req.psicologoId) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+    const data = await service.getById(req.psicologoId);
+    if (!data) return res.status(404).json({ error: 'Psicólogo não encontrado' });
+    res.json(data);
   } catch (err) {
-    console.error('Erro ao criar psicologo:', err);
-    res.status(500).json({ error: 'Erro ao criar psicólogo', detail: String(err) });
+    res.status(500).json({ error: 'Erro ao buscar psicólogo' });
   }
 });
 
 psicologoRouter.put('/:id', async (req: Request, res: Response) => {
   try {
-    const data = await service.update(Number(req.params.id), req.body);
+    if (Number(req.params.id) !== req.psicologoId) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+    const data = await service.update(req.psicologoId, req.body);
     if (!data) return res.status(404).json({ error: 'Psicólogo não encontrado' });
     res.json(data);
   } catch (err) {
@@ -56,14 +42,17 @@ psicologoRouter.put('/:id', async (req: Request, res: Response) => {
 
 psicologoRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const deleted = await service.remove(Number(req.params.id));
+    if (Number(req.params.id) !== req.psicologoId) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+    const deleted = await service.remove(req.psicologoId);
     if (!deleted) return res.status(404).json({ error: 'Psicólogo não encontrado' });
     res.status(204).send();
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Erro ao deletar psicólogo:', err);
-    if (err.message === 'PSICOLOGO_TEM_PACIENTES') {
+    if (err instanceof Error && err.message === 'PSICOLOGO_TEM_PACIENTES') {
       return res.status(409).json({
-        error: 'Não é possível deletar um psicólogo com pacientes vinculados'
+        error: 'Não é possível deletar um psicólogo com pacientes vinculados',
       });
     }
     res.status(500).json({ error: 'Erro ao deletar psicólogo' });

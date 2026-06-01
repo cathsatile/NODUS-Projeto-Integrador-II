@@ -2,12 +2,13 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Psicologo, CriarPsicologoDto } from './psicologo.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PsicologoService {
-  private readonly apiUrl = 'http://localhost:3000/api/psicologos';
+  private readonly apiUrl = `${environment.apiUrl}/psicologos`;
 
   /*signal com lista de psicologos */
   psicologos = signal<Psicologo[]>([]);

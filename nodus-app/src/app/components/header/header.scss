@@ -1,6 +1,16 @@
 .header-container {
     position: fixed;
     height: 60px;
+
+    .offline-banner {
+        background-color: #c6943d;
+        color: white;
+        text-align: center;
+        font-size: 12px;
+        font-family: 'DM Sans', sans-serif;
+        padding: 4px 16px;
+        width: 100%;
+    }
     width: 100vw;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
     z-index: 100;

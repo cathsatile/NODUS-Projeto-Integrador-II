@@ -1,7 +1,7 @@
 import { pool } from '../../database/db';
 import { Sessao } from './sessao.model';
 
-const COLUNAS = `id_sessao, data, horario, observacoes, humor, id_paciente, id_psicologo`;
+const COLUNAS = `id_sessao, data, horario, observacoes, humor, status, id_paciente, id_psicologo`;
 
 export const findAll = async (): Promise<Sessao[]> => {
   const result = await pool.query(`SELECT ${COLUNAS} FROM sessao`);
@@ -48,10 +48,11 @@ export const update = async (id: number, data: Partial<Sessao>): Promise<Sessao 
      SET data        = COALESCE($1, data),
          horario     = COALESCE($2, horario),
          observacoes = COALESCE($3, observacoes),
-         humor       = COALESCE($4, humor)
-     WHERE id_sessao = $5
+         humor       = COALESCE($4, humor),
+         status      = COALESCE($5, status)
+     WHERE id_sessao = $6
      RETURNING ${COLUNAS}`,
-    [data.data, data.horario, data.observacoes, data.humor, id]
+    [data.data, data.horario, data.observacoes, data.humor, data.status ?? null, id]
   );
   return result.rows[0] ?? null;
 };

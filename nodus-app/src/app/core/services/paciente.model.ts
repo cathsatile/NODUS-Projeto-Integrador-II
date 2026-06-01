@@ -10,7 +10,6 @@ export interface Paciente {
 export interface CriarPacienteDto {
   nome: string;
   email: string;
-  senha: string;
   data_nascimento: string;
   id_psicologo: number;
 }

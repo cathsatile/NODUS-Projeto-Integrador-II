@@ -17,58 +17,29 @@
             <p class="erro">{{erro()}}</p>
         }
 
-        <mat-stepper [linear]="true" class="stepper">
-            <mat-step [stepControl]="dadosPessoaisForm" label="Dados Pessoais">
-                <form [formGroup]="dadosPessoaisForm" class="forms">
-                    <div class="input-container">
-                        <label>Nome Completo:</label>
-                        <input class="input" type="text" formControlName="nome" placeholder="Nome do paciente">
-                    </div>
-                    <div class="row">
-                        <div class="input-container">
-                            <label>Telefone:</label>
-                            <input class="input" type="tel" formControlName="telefone" placeholder="(00) 00000-0000">
-                        </div>
-                        <div class="input-container">
-                            <label>Data de Nasc.:</label>
-                            <input class="input" type="date" formControlName="data_nascimento">
-                        </div>
-                    </div>
-                    <div class="step-actions">
-                        <button mat-button matStepperNext type="button" [disabled]="dadosPessoaisForm.invalid">
-                            Próximo
-                        </button>
-                    </div>
-                </form>
-            </mat-step>
-
-            <mat-step [stepControl]="dadosAcessoForm" label="Acesso">
-                <form [formGroup]="dadosAcessoForm" class="forms" (ngSubmit)="salvarPaciente()">
-                    <div class="input-container">
-                        <label>Email:</label>
-                        <input class="input" type="email" formControlName="email" placeholder="email@exemplo.com">
-                    </div>
-                    <div class="input-container">
-                        <label>Senha:</label>
-                        <input class="input" type="password" formControlName="senha" placeholder="Mínimo 6 caracteres">
-                    </div>
-                    <div class="input-container">
-                        <label>Confirmar Senha:</label>
-                        <input class="input" type="password" formControlName="confirmarSenha" placeholder="Repita a senha">
-                        @if (dadosAcessoForm.hasError('senhasDiferentes') && dadosAcessoForm.get('confirmarSenha')?.touched) {
-                            <span class="erro-campo">Senhas não coincidem</span>
-                        }
-                    </div>
-                    <div class="step-actions">
-                        <button mat-button matStepperPrevious type="button">Voltar</button>
-                        <button class="submit-button" type="submit"
-                            [disabled]="dadosAcessoForm.invalid || loading()">
-                            {{ loading() ? 'Salvando...' : 'Cadastrar Paciente' }}
-                        </button>
-                    </div>
-                </form>
-            </mat-step>
-        </mat-stepper>
+        <form [formGroup]="pacienteForm" class="forms" (ngSubmit)="salvarPaciente()">
+            <div class="input-container">
+                <label>Nome Completo:</label>
+                <input class="input" type="text" formControlName="nome" placeholder="Nome do paciente">
+            </div>
+            <div class="input-container">
+                <label>Email:</label>
+                <input class="input" type="email" formControlName="email" placeholder="email@exemplo.com">
+            </div>
+            <div class="row">
+                <div class="input-container">
+                    <label>Telefone:</label>
+                    <input class="input" type="tel" formControlName="telefone" placeholder="(00) 00000-0000">
+                </div>
+                <div class="input-container">
+                    <label>Data de Nasc.:</label>
+                    <input class="input" type="date" formControlName="data_nascimento">
+                </div>
+            </div>
+            <button class="submit-button" type="submit" [disabled]="pacienteForm.invalid || loading()">
+                {{ loading() ? 'Salvando...' : 'Cadastrar Paciente' }}
+            </button>
+        </form>
     </div>
     }
 
@@ -110,17 +81,17 @@
                     <input class="input" type="time" formControlName="horario">
                 </div>
             </div>
-            <div class="input-container">
-                <label>Humor do paciente:</label>
-                <select class="input" formControlName="humor">
-                    <option [ngValue]="null">- Não registrado -</option>
-                    <option [ngValue]="1">😢 Muito Mal</option>
-                    <option [ngValue]="2">😟 Mal</option>
-                    <option [ngValue]="3">😐 Neutro</option>
-                    <option [ngValue]="4">😊 Bem</option>
-                    <option [ngValue]="5">😆 Muito Bem</option>
-                </select>
-            </div>
+            @if (sessaoNoPassado) {
+                <div class="input-container">
+                    <label>Estado emocional do paciente:</label>
+                    <select class="input" formControlName="humor">
+                        <option [ngValue]="null">- Não registrado -</option>
+                        @for (emocao of EMOCOES; track emocao.valor) {
+                            <option [ngValue]="emocao.valor">{{ emocao.emoji }} {{ emocao.label }}</option>
+                        }
+                    </select>
+                </div>
+            }
             <div class="input-container">
                 <label>Observações:</label>
                 <input class="input" type="text" formControlName="observacoes"

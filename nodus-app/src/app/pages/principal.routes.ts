@@ -9,7 +9,7 @@ import { PsicologoProfile } from './psicologo-profile/psicologo-profile';
 export const principalRoutes: Routes = [
     { path: 'home', component: HomePage },
     { path: 'pacientes', component: Pacientes },
-    { path: 'info-paciente', component: InfoPaciente },
+    { path: 'info-paciente/:id', component: InfoPaciente },
     { path: 'agenda', component: Agenda },
     { path: 'sections', component: Sections },
     { path: 'psicologo-profile', component: PsicologoProfile },
