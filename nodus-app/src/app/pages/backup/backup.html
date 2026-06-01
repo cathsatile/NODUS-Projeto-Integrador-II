@@ -29,11 +29,15 @@
     <div class="card">
       <div class="card-icon">📁</div>
       <div class="card-content">
-        <h3>Salvar em arquivo</h3>
-        <p>Baixa um arquivo <code>.nodus</code> criptografado no seu dispositivo. Guarde-o em local seguro.</p>
+        <h3>Salvar localmente</h3>
+        @if (isNative) {
+          <p>Salva um backup criptografado <code>.nodus</code> em área privada do app. Não aparece no gerenciador de arquivos.</p>
+        } @else {
+          <p>Baixa um arquivo <code>.nodus</code> criptografado. Guarde-o em local seguro.</p>
+        }
       </div>
       <button class="btn-primary" (click)="exportarLocal()" [disabled]="estado() === 'carregando'">
-        @if (estado() === 'carregando') { Aguarde... } @else { Baixar Backup }
+        @if (estado() === 'carregando') { Aguarde... } @else if (isNative) { Salvar Backup } @else { Baixar Backup }
       </button>
     </div>
 
@@ -45,7 +49,7 @@
         @if (driveConectado()) {
           <p class="status-ok">Conta conectada. Backups salvos em <strong>NODUS Backup</strong> no seu Drive.</p>
         } @else {
-          <p>Conecte sua conta Google para salvar backups automaticamente na nuvem.</p>
+          <p>Conecte sua conta Google para salvar backups na nuvem, acessíveis de qualquer dispositivo.</p>
         }
       </div>
 
@@ -64,7 +68,6 @@
       }
     </div>
 
-    <!-- Info de segurança -->
     <div class="info-box">
       <span class="info-icon">🔒</span>
       <p>O arquivo de backup é criptografado com a mesma chave derivada da sua senha. Apenas você consegue abri-lo.</p>
@@ -74,7 +77,6 @@
   <!-- ─── ABA: IMPORTAR ──────────────────────────────────────────────────── -->
   @if (abaAtiva() === 'importar') {
 
-    <!-- Aviso -->
     <div class="info-box warning">
       <span class="info-icon">⚠️</span>
       <p><strong>Atenção:</strong> a restauração substitui todos os dados locais atuais pelo conteúdo do backup.</p>
@@ -113,79 +115,110 @@
       </div>
     }
 
-    <!-- Restaurar de arquivo local -->
     @if (!temBackupPendente()) {
-      <div class="card">
-        <div class="card-icon">📂</div>
-        <div class="card-content">
-          <h3>Restaurar de arquivo</h3>
-          <p>Selecione um arquivo <code>.nodus</code> salvo anteriormente.</p>
+
+      <!-- Backups locais (nativo) -->
+      @if (isNative) {
+        <div class="card">
+          <div class="card-icon">📱</div>
+          <div class="card-content">
+            <h3>Backups no dispositivo</h3>
+            <p>Backups salvos na área privada deste app.</p>
+          </div>
+          <button class="btn-secondary" (click)="carregarBackupsLocais()" [disabled]="carregandoLocais()">
+            @if (carregandoLocais()) { Carregando... } @else { Atualizar lista }
+          </button>
         </div>
-        <label class="btn-primary file-label">
-          Selecionar arquivo
-          <input type="file" accept=".nodus,.json" (change)="onFileSelected($event)" hidden>
-        </label>
-      </div>
-    }
 
-    <!-- Restaurar do Google Drive -->
-    <div class="card">
-      <div class="card-icon">☁️</div>
-      <div class="card-content">
-        <h3>Restaurar do Google Drive</h3>
-        @if (!driveConectado()) {
-          <p>Conecte sua conta Google para acessar seus backups na nuvem.</p>
-        } @else {
-          <p>Backups encontrados na pasta <strong>NODUS Backup</strong>.</p>
+        @if (backupsLocais().length > 0) {
+          <div class="drive-list">
+            <h4>Arquivos locais</h4>
+            @for (info of backupsLocais(); track info.path) {
+              <button class="drive-item" (click)="selecionarBackupLocal(info)">
+                <div class="drive-item-info">
+                  <span class="drive-item-nome">{{ info.filename }}</span>
+                  <span class="drive-item-data">{{ formatarData(info.modifiedAt) }}</span>
+                </div>
+                <span class="drive-item-arrow">›</span>
+              </button>
+            }
+          </div>
+        } @else if (!carregandoLocais()) {
+          <p class="empty-msg">Nenhum backup local encontrado. Crie um na aba "Criar Backup".</p>
         }
-      </div>
-
-      @if (!driveConectado()) {
-        <button class="btn-google" (click)="conectarGoogle()" [disabled]="estado() === 'carregando'">
-          <img src="https://www.google.com/favicon.ico" alt="Google" class="google-icon">
-          Conectar com Google
-        </button>
       } @else {
-        <button class="btn-secondary" (click)="carregarBackupsDrive()" [disabled]="carregandoBackupsDrive()">
-          @if (carregandoBackupsDrive()) { Carregando... } @else { Listar backups }
-        </button>
+        <!-- Arquivo externo (web / fallback) -->
+        <div class="card">
+          <div class="card-icon">📂</div>
+          <div class="card-content">
+            <h3>Restaurar de arquivo</h3>
+            <p>Selecione um arquivo <code>.nodus</code> salvo anteriormente.</p>
+          </div>
+          <label class="btn-primary file-label">
+            Selecionar arquivo
+            <input type="file" accept=".nodus,.json" (change)="onFileSelected($event)" hidden>
+          </label>
+        </div>
       }
-    </div>
 
-    <!-- Lista de backups do Drive -->
-    @if (backupsDrive().length > 0) {
-      <div class="drive-list">
-        <h4>Backups no Drive</h4>
-        @for (arquivo of backupsDrive(); track arquivo.id) {
-          <button
-            class="drive-item"
-            [class.selecionado]="backupDriveSelecionado()?.id === arquivo.id"
-            (click)="selecionarBackupDrive(arquivo)"
-          >
-            <div class="drive-item-info">
-              <span class="drive-item-data">{{ formatarData(arquivo.createdTime) }}</span>
-              @if (arquivo.size) {
-                <span class="drive-item-size">{{ formatarTamanho(arquivo.size) }}</span>
-              }
-            </div>
-            <span class="drive-item-arrow">›</span>
+      <!-- Google Drive -->
+      <div class="card">
+        <div class="card-icon">☁️</div>
+        <div class="card-content">
+          <h3>Restaurar do Google Drive</h3>
+          @if (!driveConectado()) {
+            <p>Conecte sua conta Google para acessar seus backups na nuvem.</p>
+          } @else {
+            <p>Backups encontrados na pasta <strong>NODUS Backup</strong>.</p>
+          }
+        </div>
+
+        @if (!driveConectado()) {
+          <button class="btn-google" (click)="conectarGoogle()" [disabled]="estado() === 'carregando'">
+            <img src="https://www.google.com/favicon.ico" alt="Google" class="google-icon">
+            Conectar com Google
+          </button>
+        } @else {
+          <button class="btn-secondary" (click)="carregarBackupsDrive()" [disabled]="carregandoBackupsDrive()">
+            @if (carregandoBackupsDrive()) { Carregando... } @else { Listar backups }
           </button>
         }
       </div>
+
+      <!-- Lista de backups do Drive -->
+      @if (backupsDrive().length > 0) {
+        <div class="drive-list">
+          <h4>Backups no Drive</h4>
+          @for (arquivo of backupsDrive(); track arquivo.id) {
+            <button
+              class="drive-item"
+              [class.selecionado]="backupDriveSelecionado()?.id === arquivo.id"
+              (click)="selecionarBackupDrive(arquivo)"
+            >
+              <div class="drive-item-info">
+                <span class="drive-item-data">{{ formatarData(arquivo.createdTime) }}</span>
+                @if (arquivo.size) {
+                  <span class="drive-item-size">{{ formatarTamanho(arquivo.size) }}</span>
+                }
+              </div>
+              <span class="drive-item-arrow">›</span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (estado() === 'carregando') {
+        <div class="loading-row">
+          <span class="spinner"></span>
+          <span>Aguarde...</span>
+        </div>
+      }
+
     }
 
-    <!-- Loading Drive -->
-    @if (estado() === 'carregando' && !temBackupPendente()) {
-      <div class="loading-row">
-        <span class="spinner"></span>
-        <span>Aguarde...</span>
-      </div>
-    }
-
-    <!-- Info recuperação -->
     <div class="info-box">
       <span class="info-icon">💡</span>
-      <p>Para recuperar dados em um novo dispositivo: faça login com as mesmas credenciais e restaure o backup.</p>
+      <p>Para recuperar dados em um novo dispositivo: faça login e restaure o backup do Drive ou de um arquivo.</p>
     </div>
   }
 

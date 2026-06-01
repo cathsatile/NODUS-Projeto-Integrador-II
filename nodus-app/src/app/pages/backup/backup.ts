@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BackupService, EncryptedBackup, ImportResult } from '../../core/services/backup.service';
+import { BackupService, EncryptedBackup, ImportResult, LocalBackupInfo } from '../../core/services/backup.service';
 import { GoogleDriveService, DriveFile } from '../../core/services/google-drive.service';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -21,50 +21,54 @@ export class BackupPage {
 
   readonly psicologo = this.authService.psicologoAtual;
   readonly driveConectado = this.driveService.conectado;
+  readonly isNative = this.backupService.isNative;
 
   readonly abaAtiva = signal<Aba>('exportar');
   readonly estado = signal<Estado>('idle');
   readonly mensagem = signal('');
 
-  // Estado de exportação
   readonly enviandoDrive = signal(false);
 
-  // Estado de importação
   readonly backupPendente = signal<EncryptedBackup | null>(null);
   readonly resultadoImport = signal<ImportResult | null>(null);
   readonly backupsDrive = signal<DriveFile[]>([]);
   readonly carregandoBackupsDrive = signal(false);
   readonly backupDriveSelecionado = signal<DriveFile | null>(null);
+  readonly backupsLocais = signal<LocalBackupInfo[]>([]);
+  readonly carregandoLocais = signal(false);
   readonly confirmandoRestauracao = signal(false);
 
   readonly temBackupPendente = computed(() => !!this.backupPendente());
   readonly nomeArquivoPendente = computed(() => {
     const b = this.backupPendente();
-    if (!b) return '';
-    return new Date(b.timestamp).toLocaleString('pt-BR');
+    return b ? new Date(b.timestamp).toLocaleString('pt-BR') : '';
   });
 
   setAba(aba: Aba): void {
     this.abaAtiva.set(aba);
     this.resetarEstado();
+    if (aba === 'importar' && this.isNative) {
+      void this.carregarBackupsLocais();
+    }
   }
 
-  // ─── Exportar ────────────────────────────────────────────────────────────────
+  // ─── Exportar ─────────────────────────────────────────────────────────────
 
   async exportarLocal(): Promise<void> {
     const chave = this.authService.chaveCripto();
     const psi = this.psicologo();
-    if (!chave || !psi) {
-      this.setErro('Sessão inativa. Faça login novamente.');
-      return;
-    }
+    if (!chave || !psi) { this.setErro('Sessão inativa. Faça login novamente.'); return; }
 
     this.estado.set('carregando');
     try {
       const data = await this.backupService.exportar();
       const backup = this.backupService.criptografarBackup(data, chave, psi.email);
-      this.backupService.baixarArquivo(backup);
-      this.setMensagem('sucesso', `Backup criado com ${data.pacientes.length} pacientes e ${data.sessoes.length} sessões.`);
+      await this.backupService.salvarLocal(backup);
+      const msg = this.isNative
+        ? `Backup salvo com ${data.pacientes.length} pacientes e ${data.sessoes.length} sessões.`
+        : `Arquivo baixado com ${data.pacientes.length} pacientes e ${data.sessoes.length} sessões.`;
+      this.setMensagem('sucesso', msg);
+      if (this.isNative) void this.carregarBackupsLocais();
     } catch (err) {
       this.setErro(err instanceof Error ? err.message : 'Erro ao criar backup.');
     }
@@ -90,10 +94,7 @@ export class BackupPage {
   async exportarDrive(): Promise<void> {
     const chave = this.authService.chaveCripto();
     const psi = this.psicologo();
-    if (!chave || !psi) {
-      this.setErro('Sessão inativa.');
-      return;
-    }
+    if (!chave || !psi) { this.setErro('Sessão inativa.'); return; }
 
     this.enviandoDrive.set(true);
     this.estado.set('carregando');
@@ -101,7 +102,7 @@ export class BackupPage {
       const data = await this.backupService.exportar();
       const backup = this.backupService.criptografarBackup(data, chave, psi.email);
       await this.driveService.salvarBackup(backup);
-      this.setMensagem('sucesso', `Backup salvo no Google Drive com sucesso.`);
+      this.setMensagem('sucesso', 'Backup salvo no Google Drive com sucesso.');
     } catch (err) {
       this.setErro(err instanceof Error ? err.message : 'Erro ao salvar no Drive.');
     } finally {
@@ -109,7 +110,7 @@ export class BackupPage {
     }
   }
 
-  // ─── Importar ────────────────────────────────────────────────────────────────
+  // ─── Importar — arquivo local (web fallback) ───────────────────────────────
 
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -128,14 +129,40 @@ export class BackupPage {
     input.value = '';
   }
 
+  // ─── Importar — backups locais nativos ────────────────────────────────────
+
+  async carregarBackupsLocais(): Promise<void> {
+    this.carregandoLocais.set(true);
+    try {
+      const lista = await this.backupService.listarBackupsLocais();
+      this.backupsLocais.set(lista);
+    } catch {
+      this.backupsLocais.set([]);
+    } finally {
+      this.carregandoLocais.set(false);
+    }
+  }
+
+  async selecionarBackupLocal(info: LocalBackupInfo): Promise<void> {
+    this.backupPendente.set(null);
+    this.estado.set('carregando');
+    try {
+      const backup = await this.backupService.carregarBackupLocal(info.path);
+      this.backupPendente.set(backup);
+      this.estado.set('idle');
+    } catch (err) {
+      this.setErro(err instanceof Error ? err.message : 'Erro ao carregar backup local.');
+    }
+  }
+
+  // ─── Importar — Google Drive ───────────────────────────────────────────────
+
   async carregarBackupsDrive(): Promise<void> {
     this.carregandoBackupsDrive.set(true);
     try {
       const lista = await this.driveService.listarBackups();
       this.backupsDrive.set(lista);
-      if (lista.length === 0) {
-        this.setMensagem('idle', 'Nenhum backup encontrado no Drive.');
-      }
+      if (lista.length === 0) this.setMensagem('idle', 'Nenhum backup encontrado no Drive.');
     } catch (err) {
       this.setErro(err instanceof Error ? err.message : 'Erro ao listar backups.');
     } finally {
@@ -156,13 +183,10 @@ export class BackupPage {
     }
   }
 
-  iniciarRestauracao(): void {
-    this.confirmandoRestauracao.set(true);
-  }
+  // ─── Confirmação de restauração ────────────────────────────────────────────
 
-  cancelarRestauracao(): void {
-    this.confirmandoRestauracao.set(false);
-  }
+  iniciarRestauracao(): void { this.confirmandoRestauracao.set(true); }
+  cancelarRestauracao(): void { this.confirmandoRestauracao.set(false); }
 
   async confirmarRestauracao(): Promise<void> {
     const backup = this.backupPendente();
@@ -207,8 +231,6 @@ export class BackupPage {
     if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
     return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   }
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   private setMensagem(estado: Estado, msg: string): void {
     this.estado.set(estado);
