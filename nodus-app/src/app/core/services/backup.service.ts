@@ -114,7 +114,7 @@ export class BackupService {
       await Filesystem.writeFile({
         path: `${BACKUP_DIR}/${filename}`,
         data: content,
-        directory: Directory.Data,
+        directory: Directory.External,
         encoding: Encoding.UTF8,
         recursive: true,
       });
@@ -133,7 +133,7 @@ export class BackupService {
     try {
       const result = await Filesystem.readdir({
         path: BACKUP_DIR,
-        directory: Directory.Data,
+        directory: Directory.External,
       });
 
       const infos: LocalBackupInfo[] = [];
@@ -158,7 +158,7 @@ export class BackupService {
   async carregarBackupLocal(path: string): Promise<EncryptedBackup> {
     const result = await Filesystem.readFile({
       path,
-      directory: Directory.Data,
+      directory: Directory.External,
       encoding: Encoding.UTF8,
     });
 
@@ -209,7 +209,7 @@ export class BackupService {
     try {
       await Filesystem.mkdir({
         path: BACKUP_DIR,
-        directory: Directory.Data,
+        directory: Directory.External,
         recursive: true,
       });
     } catch {

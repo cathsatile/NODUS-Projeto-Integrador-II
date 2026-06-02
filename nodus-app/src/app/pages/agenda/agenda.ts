@@ -42,7 +42,7 @@ export class Agenda implements OnInit {
   readonly diasComSessao = computed(() => {
     const set = new Set<string>();
     for (const s of this.sessaoService.sessoes()) {
-      set.add(this.toDateKey(new Date(s.data)));
+      set.add(s.data.slice(0, 10));
     }
     return set;
   });
@@ -53,7 +53,7 @@ export class Agenda implements OnInit {
     const key = this.toDateKey(date);
     const pacientes = this.pacienteService.pacientes();
     return this.sessaoService.sessoes()
-      .filter(s => this.toDateKey(new Date(s.data)) === key)
+      .filter(s => s.data.slice(0, 10) === key)
       .sort((a, b) => (a.horario ?? '').localeCompare(b.horario ?? ''))
       .map(s => ({
         ...s,

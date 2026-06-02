@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService, CriarPsicologoDto } from '../../core/auth/auth.service';
 import { GoogleDriveService, DriveFile } from '../../core/services/google-drive.service';
-import { BackupService, BackupData, EncryptedBackup } from '../../core/services/backup.service';
+import { BackupService, BackupData, EncryptedBackup, LocalBackupInfo } from '../../core/services/backup.service';
 
 function senhasIguaisValidator(form: AbstractControl): ValidationErrors | null {
   const senha = form.get('senha')?.value as string;
@@ -56,10 +56,14 @@ export class Login implements OnInit {
     return p.nome.split(' ').filter(w => w.length > 0).slice(0, 2).map(w => w[0].toUpperCase()).join('');
   });
 
+  readonly isNative = this.backupService.isNative;
+
   // Estado do fluxo de restauração
   readonly backupCarregado = signal<EncryptedBackup | null>(null);
   readonly backupsDrive = signal<DriveFile[]>([]);
   readonly carregandoDrive = signal(false);
+  readonly backupsLocais = signal<LocalBackupInfo[]>([]);
+  readonly carregandoLocais = signal(false);
 
   // Dados decriptografados aguardando importação após login
   _backupParaImportar: BackupData | null = null;
@@ -113,6 +117,33 @@ export class Login implements OnInit {
     this.tipoBotao = 'restaurar';
     this.erroRestauro.set('');
     this.backupsDrive.set([]);
+    if (this.isNative) void this.carregarBackupsLocais();
+  }
+
+  async carregarBackupsLocais(): Promise<void> {
+    this.carregandoLocais.set(true);
+    try {
+      const lista = await this.backupService.listarBackupsLocais();
+      this.backupsLocais.set(lista);
+    } catch {
+      this.backupsLocais.set([]);
+    } finally {
+      this.carregandoLocais.set(false);
+    }
+  }
+
+  async selecionarBackupLocal(info: LocalBackupInfo): Promise<void> {
+    this.erroRestauro.set('');
+    this.loading.set(true);
+    try {
+      const backup = await this.backupService.carregarBackupLocal(info.path);
+      this.backupCarregado.set(backup);
+      this.tipoBotao = 'restaurar-senha';
+    } catch (err) {
+      this.erroRestauro.set(err instanceof Error ? err.message : 'Erro ao carregar backup.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   voltarParaInicial(): void {
@@ -123,7 +154,7 @@ export class Login implements OnInit {
 
   // ─── Desbloqueio (retorno ao app) ─────────────────────────────────────────
 
-  desbloquear(): void {
+  async desbloquear(): Promise<void> {
     if (this.desbloquearForm.invalid) {
       this.desbloquearForm.markAllAsTouched();
       return;
@@ -132,18 +163,18 @@ export class Login implements OnInit {
     this.erro.set('');
 
     const { senha } = this.desbloquearForm.value as { senha: string };
-    const sucesso = this.authService.desbloquear(senha);
+    const sucesso = await this.authService.desbloquear(senha);
 
+    this.loading.set(false);
     if (sucesso) {
       void this.router.navigate(['/principal/home']);
     } else {
       this.erro.set('Senha incorreta.');
-      this.loading.set(false);
     }
   }
 
   trocarConta(): void {
-    this.authService.logout();
+    this.authService.limparConta();
     this.tipoBotao = 'inicial';
     this.erro.set('');
   }
@@ -284,7 +315,7 @@ export class Login implements OnInit {
     }
   }
 
-  confirmarRestauro(): void {
+  async confirmarRestauro(): Promise<void> {
     if (this.restaurarSenhaForm.invalid) {
       this.restaurarSenhaForm.markAllAsTouched();
       return;
@@ -298,7 +329,7 @@ export class Login implements OnInit {
     const { senha } = this.restaurarSenhaForm.value as { senha: string };
     try {
       // Deriva a mesma chave que será usada após o login — sem precisar de rede
-      const chave = this.authService.derivarChave(senha, backup.psicologo_email);
+      const chave = await this.authService.derivarChaveAsync(senha, backup.psicologo_email);
       const data = this.backupService.descriptografarBackup(backup, chave);
 
       // Guarda os dados; serão importados para o Dexie após o login bem-sucedido

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, EMPTY } from 'rxjs';
+import { Observable, tap, catchError, EMPTY, of } from 'rxjs';
 import { Paciente, CriarPacienteDto } from './paciente.model';
 import { AuthService } from '../auth/auth.service';
 import { CryptoService } from './crypto';
@@ -98,41 +98,54 @@ export class PacienteService {
   }
 
   create(data: CriarPacienteDto): Observable<Paciente> {
-    return this.http.post<Paciente>(this.apiUrl, this.cifrar(data)).pipe(
-      tap(novo => {
-        void this.db.pacientes.add({
-          id_paciente:     novo.id_paciente,
-          nome:            novo.nome,
-          email:           novo.email,
-          data_nascimento: novo.data_nascimento,
-          id_psicologo:    novo.id_psicologo,
-        } as PacienteLocal);
-        this.pacientes.update(lista => [...lista, this.decifrar(novo)]);
-      })
-    );
+    const psicologo = this.authService.psicologoAtual();
+    const cifrado = this.cifrar(data);
+    const localId = Date.now();
+    const novo: Paciente = {
+      id_paciente:     localId,
+      nome:            cifrado.nome ?? data.nome,
+      email:           cifrado.email ?? data.email,
+      data_nascimento: cifrado.data_nascimento ?? data.data_nascimento,
+      id_psicologo:    psicologo?.id_psicologo ?? 0,
+    };
+    void this.db.pacientes.add({ ...novo } as PacienteLocal);
+    this.pacientes.update(lista => [...lista, this.decifrar(novo)]);
+
+    this.http.post<Paciente>(this.apiUrl, cifrado).pipe(
+      tap(remoto => {
+        void this.db.pacientes.where('id_paciente').equals(localId).modify({ id_paciente: remoto.id_paciente });
+        this.pacientes.update(lista =>
+          lista.map(p => p.id_paciente === localId ? this.decifrar(remoto) : p)
+        );
+      }),
+      catchError(() => EMPTY)
+    ).subscribe();
+
+    return of(this.decifrar(novo));
   }
 
   update(id: number, data: Partial<Paciente>): Observable<Paciente> {
-    return this.http.put<Paciente>(`${this.apiUrl}/${id}`, this.cifrar(data)).pipe(
-      tap(atualizado => {
-        void this.db.pacientes.where('id_paciente').equals(id).modify({
-          nome:            atualizado.nome,
-          email:           atualizado.email,
-          data_nascimento: atualizado.data_nascimento,
-        });
-        this.pacientes.update(lista =>
-          lista.map(p => p.id_paciente === id ? this.decifrar(atualizado) : p)
-        );
-      })
+    const cifrado = this.cifrar(data);
+    void this.db.pacientes.where('id_paciente').equals(id).modify(cifrado);
+    this.pacientes.update(lista =>
+      lista.map(p => p.id_paciente === id ? { ...p, ...this.decifrar({ id_paciente: id, id_psicologo: p.id_psicologo, nome: '', email: '', data_nascimento: '', ...cifrado }) } : p)
     );
+
+    this.http.put<Paciente>(`${this.apiUrl}/${id}`, cifrado).pipe(
+      catchError(() => EMPTY)
+    ).subscribe();
+
+    return of({ id_paciente: id, id_psicologo: 0, nome: '', email: '', data_nascimento: '', ...data });
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      tap(() => {
-        void this.db.pacientes.where('id_paciente').equals(id).delete();
-        this.pacientes.update(lista => lista.filter(p => p.id_paciente !== id));
-      })
-    );
+    void this.db.pacientes.where('id_paciente').equals(id).delete();
+    this.pacientes.update(lista => lista.filter(p => p.id_paciente !== id));
+
+    this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      catchError(() => EMPTY)
+    ).subscribe();
+
+    return of(void 0);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, tap, map, catchError, of, throwError } from 'rxjs';
+import { Observable, from, switchMap, map, catchError, of, timeout } from 'rxjs';
 import * as CryptoJS from 'crypto-js';
 import { environment } from '../../../environments/environment';
 
@@ -77,17 +77,32 @@ export class AuthService {
   // Login: se o usuário já está salvo localmente com o mesmo email, autentica sem backend.
   // Caso contrário tenta o backend (útil para sincronização quando online).
   login(email: string, senha: string): Observable<void> {
-    const local = this._psicologoAtual();
+    let local = this._psicologoAtual();
+
+    // Após logout suave o signal está vazio, mas o perfil ainda pode estar no localStorage
+    if (!local) {
+      const stored = localStorage.getItem(this.PSICOLOGO_KEY);
+      if (stored) {
+        try {
+          local = JSON.parse(stored) as PsicologoPublico;
+          this._psicologoAtual.set(local);
+        } catch { /* ignora dado corrompido */ }
+      }
+    }
+
     if (local && local.email === email) {
-      const ok = this.desbloquear(senha);
-      if (ok) return of(void 0);
-      return throwError(() => new HttpErrorResponse({ status: 401 }));
+      return from(this.desbloquear(senha)).pipe(
+        map(ok => {
+          if (!ok) throw new HttpErrorResponse({ status: 401 });
+        })
+      );
     }
 
     return this.http
       .post<AuthResponse>(`${this.API_URL}/login`, { email, senha })
       .pipe(
-        tap(res => this.salvarSessao(res, senha)),
+        timeout(5000),
+        switchMap(res => from(this.salvarSessao(res, senha))),
         map(() => void 0)
       );
   }
@@ -95,30 +110,26 @@ export class AuthService {
   // Cadastro: tenta o backend; se indisponível (offline ou sem servidor), registra localmente.
   register(data: CriarPsicologoDto): Observable<void> {
     if (!navigator.onLine) {
-      this.registrarLocal(data);
-      return of(void 0);
+      return from(this.registrarLocal(data));
     }
 
     return this.http
       .post<AuthResponse>(`${this.API_URL}/register`, data)
       .pipe(
-        tap(res => this.salvarSessao(res, data.senha)),
+        timeout(5000),
+        switchMap(res => from(this.salvarSessao(res, data.senha))),
         map(() => void 0),
-        catchError(() => {
-          // Backend indisponível mesmo com conexão → registra localmente
-          this.registrarLocal(data);
-          return of(void 0);
-        })
+        catchError(() => from(this.registrarLocal(data)))
       );
   }
 
   // Desbloqueia a sessão validando a senha localmente, sem necessidade de rede.
   // Retorna false se a senha estiver errada.
-  desbloquear(senha: string): boolean {
+  async desbloquear(senha: string): Promise<boolean> {
     const psicologo = this._psicologoAtual();
     if (!psicologo) return false;
 
-    const chave = this.derivarChave(senha, psicologo.email);
+    const chave = await this.derivarChaveAsync(senha, psicologo.email);
     const verifyToken = localStorage.getItem(this.VERIFY_KEY);
 
     if (verifyToken) {
@@ -135,7 +146,15 @@ export class AuthService {
     return true;
   }
 
+  // Logout suave: encerra a sessão mas mantém o perfil para re-autenticação offline.
   logout(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    this._psicologoAtual.set(null);
+    this._chaveCripto.set(null);
+  }
+
+  // Limpa completamente a conta — usado em "trocar conta".
+  limparConta(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.PSICOLOGO_KEY);
     localStorage.removeItem(this.VERIFY_KEY);
@@ -147,20 +166,23 @@ export class AuthService {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  // PBKDF2: deriva chave AES-256 a partir da senha + salt único por usuário (email).
-  // 100.000 iterações conforme recomendação NIST SP 800-132 (2023) para PBKDF2-SHA1.
+  // PBKDF2 assíncrono via Web Crypto API — não bloqueia o thread de UI.
+  // SHA-256, 100.000 iterações, salt único por usuário.
   // Público para permitir verificação local durante restauração de backup sem sessão ativa.
-  derivarChave(senha: string, email: string): string {
-    const saltUsuario = `NODUS:${email}:2026`;
-    return CryptoJS.PBKDF2(senha, saltUsuario, {
-      keySize: 256 / 32,
-      iterations: 100_000,
-    }).toString();
+  async derivarChaveAsync(senha: string, email: string): Promise<string> {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(senha), { name: 'PBKDF2' }, false, ['deriveBits']
+    );
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: enc.encode(`NODUS:${email}:2026`), iterations: 100_000, hash: 'SHA-256' },
+      keyMaterial, 256
+    );
+    return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   // Registro local: cria conta sem backend, usando timestamp como ID único.
-  // Utilizado quando o servidor está offline ou não está configurado.
-  private registrarLocal(data: CriarPsicologoDto): void {
+  private async registrarLocal(data: CriarPsicologoDto): Promise<void> {
     const psicologo: PsicologoPublico = {
       id_psicologo: Date.now(),
       nome: data.nome,
@@ -169,18 +191,17 @@ export class AuthService {
     };
     localStorage.setItem(this.PSICOLOGO_KEY, JSON.stringify(psicologo));
     this._psicologoAtual.set(psicologo);
-    const chave = this.derivarChave(data.senha, data.email);
+    const chave = await this.derivarChaveAsync(data.senha, data.email);
     this._chaveCripto.set(chave);
     localStorage.setItem(this.VERIFY_KEY, CryptoJS.AES.encrypt(psicologo.email, chave).toString());
   }
 
-  private salvarSessao(res: AuthResponse, senha: string): void {
+  private async salvarSessao(res: AuthResponse, senha: string): Promise<void> {
     localStorage.setItem(this.TOKEN_KEY, res.token);
     localStorage.setItem(this.PSICOLOGO_KEY, JSON.stringify(res.psicologo));
     this._psicologoAtual.set(res.psicologo);
-    const chave = this.derivarChave(senha, res.psicologo.email);
+    const chave = await this.derivarChaveAsync(senha, res.psicologo.email);
     this._chaveCripto.set(chave);
-    // Armazena verificação: email cifrado com a chave — nunca expõe a chave em si
     localStorage.setItem(this.VERIFY_KEY, CryptoJS.AES.encrypt(res.psicologo.email, chave).toString());
   }
 

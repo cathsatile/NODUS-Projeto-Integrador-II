@@ -88,10 +88,31 @@
         </div>
 
         <!-- Arquivo local -->
-        <label class="btn-arquivo">
-            Importar arquivo local (.nodus)
-            <input type="file" accept=".nodus,.json" (change)="onFileParaRestauro($event)" hidden [disabled]="loading()">
-        </label>
+        @if(isNative){
+            <p class="restaurar-secao-titulo">Backups neste dispositivo:</p>
+            @if(carregandoLocais()){
+                <p class="carregando-locais">Buscando backups...</p>
+            } @else if(backupsLocais().length > 0){
+                <div class="drive-lista">
+                    @for(info of backupsLocais(); track info.path){
+                    <button class="drive-item" (click)="selecionarBackupLocal(info)" [disabled]="loading()">
+                        <div class="drive-item-info">
+                            <span class="drive-item-nome">{{ info.filename }}</span>
+                            <span class="drive-item-data">{{ formatarData(info.modifiedAt) }}</span>
+                        </div>
+                        <span class="drive-item-arrow">›</span>
+                    </button>
+                    }
+                </div>
+            } @else {
+                <p class="sem-backups-locais">Nenhum backup local encontrado neste dispositivo.</p>
+            }
+        } @else {
+            <label class="btn-arquivo">
+                Importar arquivo local (.nodus)
+                <input type="file" accept=".nodus,.json" (change)="onFileParaRestauro($event)" hidden [disabled]="loading()">
+            </label>
+        }
 
         @if(erroRestauro()){
             <p class="erro">{{ erroRestauro() }}</p>

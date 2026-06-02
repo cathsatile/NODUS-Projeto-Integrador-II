@@ -106,8 +106,10 @@ CREATE TABLE sessao (
 ### Autenticação
 - `POST /api/auth/login` e `POST /api/auth/register` com JWT de 8h e bcrypt
 - Guard `authGuard` protege `/principal`; interceptor injeta Bearer token
-- PBKDF2 com 100.000 iterações deriva a chave AES-256 da senha no login
+- PBKDF2 assíncrono via **Web Crypto API** (`crypto.subtle`, 100.000 iterações, SHA-256) deriva a chave AES-256 — não bloqueia o thread de UI
 - Chave AES existe apenas em memória (signal `_chaveCripto`); nunca em localStorage
+- `login()` verifica `localStorage` antes de ir ao backend (re-auth após logout suave); timeout de 5s nas chamadas HTTP — cadastro cai para conta local automaticamente se backend não responder
+- `logout()` mantém perfil e `nodus_verify` no localStorage para re-autenticação offline; `limparConta()` apaga tudo — chamado por "Usar outra conta"
 
 ### Segurança (Backend)
 - `authMiddleware` JWT aplicado em todas as rotas protegidas
@@ -116,10 +118,17 @@ CREATE TABLE sessao (
 - `capacitor.config.ts`: `allowMixedContent: true` para WebView Android
 
 ### Offline-First (Dexie.js — schema v3)
-- `PacienteService`: cache-first — lê do Dexie, sincroniza em background; create/update/delete gravam localmente
-- `SessaoService`: idem; `update()` persiste status, humor e observacoes no IndexedDB
+- `PacienteService` e `SessaoService`: mutations (`create`/`update`/`delete`) gravam no Dexie imediatamente e retornam `of(valor)` — HTTP é fire-and-forget com `catchError(() => EMPTY)`
+- Leituras usam cache Dexie primeiro; HTTP atualiza o cache em background sem bloquear a UI
 - `NetworkStatusService`: signal `isOnline` reativo a eventos `online`/`offline`
 - Header exibe banner "Sem conexão..." automaticamente quando offline
+
+### Backup (`BackupService`)
+- Exporta/importa todos os dados do Dexie como arquivo `.nodus` (JSON criptografado AES-256 com a chave derivada da senha do usuário)
+- No Android, backups salvos em `Directory.External` → `Android/data/com.nodus.app/files/backups/` — visível no gerenciador de arquivos sem permissão extra
+- Na tela de restauração (nativo), a UI lista os arquivos `.nodus` dessa pasta diretamente — sem file picker genérico
+- Fluxo: seleciona arquivo → confirma senha NODUS (decripta offline) → faz login → importa para Dexie
+- No web: file picker `<input type="file">` para selecionar o `.nodus`
 
 ### Emoções Clínicas (`core/services/emocoes.ts`)
 Arquivo central com 11 emoções clínicas e 5 status de sessão. **Não duplicar esta lógica em componentes.**
@@ -199,6 +208,8 @@ Funções exportadas: `emocaoLabel(valor)`, `emocaoEmoji(valor)`, `statusLabel(v
 ### Performance
 - Listas de sessões/pacientes usam paginação (PAGE_SIZE = 10 com "Ver mais").
 - `sessoesFiltradas` em sections.ts é um `computed()` que reage ao signal `busca` — não filtrar no template.
+- PBKDF2 é assíncrono (Web Crypto API); nunca usar `CryptoJS.PBKDF2` — bloqueia o thread por 5-15s no mobile.
+- Mutations de serviço são Dexie-first com HTTP em background; nunca esperar resposta HTTP para atualizar a UI.
 
 ---
 

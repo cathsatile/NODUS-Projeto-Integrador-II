@@ -29,17 +29,16 @@ export class HomePage implements OnInit {
 
   readonly numSessoesMes = computed(() => {
     const agora = new Date();
-    return this.sessaoService.sessoes().filter(s => {
-      const d = new Date(s.data);
-      return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
-    }).length;
+    const mesKey = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
+    return this.sessaoService.sessoes().filter(s => s.data.slice(0, 7) === mesKey).length;
   });
 
   readonly sessoesHoje = computed(() => {
-    const hoje = new Date().toDateString();
+    const agora = new Date();
+    const hojeKey = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
     const pacientes = this.pacienteService.pacientes();
     return this.sessaoService.sessoes()
-      .filter(s => new Date(s.data).toDateString() === hoje)
+      .filter(s => s.data.slice(0, 10) === hojeKey)
       .sort((a, b) => (a.horario ?? '').localeCompare(b.horario ?? ''))
       .map(s => ({
         ...s,

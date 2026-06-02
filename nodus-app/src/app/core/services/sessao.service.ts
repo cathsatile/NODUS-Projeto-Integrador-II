@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, EMPTY } from 'rxjs';
+import { Observable, tap, catchError, EMPTY, of } from 'rxjs';
 import { Sessao, CriarSessaoDto } from './sessao.model';
 import { AuthService } from '../auth/auth.service';
 import { CryptoService } from './crypto';
@@ -95,17 +95,40 @@ export class SessaoService {
   }
 
   create(data: CriarSessaoDto): Observable<Sessao> {
-    return this.http.post<Sessao>(this.apiUrl, this.cifrar(data)).pipe(
-      tap(nova => {
-        void this.db.sessoes.add({ ...nova } as SessaoLocal);
-        const chave = this.authService.chaveCripto();
-        const novaDecifrada: Sessao = {
-          ...nova,
-          observacoes: chave ? this.decifrarObservacoes(nova.observacoes, chave) : nova.observacoes,
-        };
-        this.sessoes.update(lista => [...lista, novaDecifrada]);
-      })
-    );
+    const psicologo = this.authService.psicologoAtual();
+    const cifrado = this.cifrar(data);
+    const localId = Date.now();
+    const chave = this.authService.chaveCripto();
+    const nova: Sessao = {
+      id_sessao:    localId,
+      data:         data.data,
+      horario:      data.horario,
+      observacoes:  cifrado.observacoes,
+      humor:        data.humor,
+      id_paciente:  data.id_paciente,
+      id_psicologo: psicologo?.id_psicologo ?? 0,
+    };
+    void this.db.sessoes.add({ ...nova } as SessaoLocal);
+    const novaDecifrada: Sessao = {
+      ...nova,
+      observacoes: chave ? this.decifrarObservacoes(nova.observacoes, chave) : nova.observacoes,
+    };
+    this.sessoes.update(lista => [...lista, novaDecifrada]);
+
+    this.http.post<Sessao>(this.apiUrl, cifrado).pipe(
+      tap(remota => {
+        void this.db.sessoes.where('id_sessao').equals(localId).modify({ id_sessao: remota.id_sessao });
+        this.sessoes.update(lista =>
+          lista.map(s => s.id_sessao === localId ? {
+            ...remota,
+            observacoes: chave ? this.decifrarObservacoes(remota.observacoes, chave) : remota.observacoes,
+          } : s)
+        );
+      }),
+      catchError(() => EMPTY)
+    ).subscribe();
+
+    return of(novaDecifrada);
   }
 
   update(id: number, data: Partial<Sessao>): Observable<Sessao> {
@@ -115,29 +138,35 @@ export class SessaoService {
       cifrado.observacoes = this.cryptoService.encrypt(cifrado.observacoes, chave);
     }
 
-    return this.http.put<Sessao>(`${this.apiUrl}/${id}`, cifrado).pipe(
-      tap(atualizada => {
-        const decifrada: Sessao = {
-          ...atualizada,
-          observacoes: chave ? this.decifrarObservacoes(atualizada.observacoes, chave) : atualizada.observacoes,
-        };
-        void this.db.sessoes.where('id_sessao').equals(id).modify({
-          status: atualizada.status,
-          humor: atualizada.humor,
-          observacoes: atualizada.observacoes,
-        });
-        this.sessoes.update(lista =>
-          lista.map(s => s.id_sessao === id ? decifrada : s)
-        );
-      })
+    void this.db.sessoes.where('id_sessao').equals(id).modify({
+      status:      cifrado.status,
+      humor:       cifrado.humor,
+      observacoes: cifrado.observacoes,
+    });
+    this.sessoes.update(lista =>
+      lista.map(s => s.id_sessao === id ? { ...s, ...data } : s)
     );
+
+    this.http.put<Sessao>(`${this.apiUrl}/${id}`, cifrado).pipe(
+      catchError(() => EMPTY)
+    ).subscribe();
+
+    const decifrada: Sessao = {
+      id_sessao: id, data: '', horario: '', id_paciente: 0, id_psicologo: 0,
+      ...data,
+      observacoes: data.observacoes,
+    };
+    return of(decifrada);
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      tap(() => this.sessoes.update(lista =>
-        lista.filter(s => s.id_sessao !== id)
-      ))
-    );
+    void this.db.sessoes.where('id_sessao').equals(id).delete();
+    this.sessoes.update(lista => lista.filter(s => s.id_sessao !== id));
+
+    this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      catchError(() => EMPTY)
+    ).subscribe();
+
+    return of(void 0);
   }
 }
