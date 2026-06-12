@@ -1,0 +1,25 @@
+{
+  "name": "NODUS — Gestão Clínica",
+  "short_name": "NODUS",
+  "description": "Sistema de gestão clínica e monitoramento terapêutico para psicólogos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#c3334b",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "assets/images/logo_sem_texto.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/logo_sem_texto.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
