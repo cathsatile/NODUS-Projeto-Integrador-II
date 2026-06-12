@@ -1,7 +1,7 @@
 # Guia de Demo — NODUS no iPhone
 
 > Para o colega que vai apresentar o app para a cliente.  
-> Siga os passos na ordem. Leva menos de 10 minutos para configurar tudo.
+> Siga os passos na ordem. Leva menos de 15 minutos para configurar tudo.
 
 ---
 
@@ -9,18 +9,37 @@
 
 Faça essa parte em casa ou no caminho, com calma.
 
-### 1. Instalar o app no iPhone
+### 1. Fazer o deploy do app no Netlify (você gerencia isso)
+
+Você vai criar a conta e hospedar o app. É gratuito e leva menos de 5 minutos.
+
+1. Acessa **netlify.com** e clica em **"Sign up"**
+2. Escolhe **"Sign up with GitHub"** e autoriza o acesso
+3. Na dashboard, clica em **"Add new site"** → **"Import an existing project"**
+4. Escolhe **GitHub** e seleciona o repositório **`NODUS-Projeto-Integrador-II`**
+5. Preenche as configurações de build:
+   - **Branch:** `feat/pwa-ios-client`
+   - **Base directory:** `nodus-app`
+   - **Build command:** `npm run build`
+   - **Publish directory:** `dist/nodus-app/browser`
+6. Clica em **"Deploy site"**
+7. Aguarda 1-2 minutos — o Netlify gera uma URL no formato `https://nome-aleatório.netlify.app`
+
+> Você pode personalizar o nome da URL em Site Settings → Domain → Change site name, por exemplo `nodus-demo.netlify.app`.
+
+Guarda essa URL — você vai usar no passo seguinte.
+
+### 2. Instalar o app no iPhone
 
 1. Abra o **Safari** (não o Chrome, não o Firefox — tem que ser o Safari mesmo)
-2. Acesse a URL do deploy: `https://<url-do-netlify>.netlify.app`
-   > Davi vai te passar a URL exata depois do deploy no Netlify
+2. Acesse a URL que o Netlify gerou (ex: `https://nodus-demo.netlify.app`)
 3. Toque no botão **Compartilhar** — é o ícone de quadrado com uma seta para cima, na barra inferior do Safari
 4. Role a lista para baixo e toque em **"Adicionar à Tela de Início"**
 5. Deixa o nome como **NODUS** e toque em **"Adicionar"**
 
 Agora o app aparece na tela inicial do iPhone igual a um app normal.
 
-### 2. Criar a conta de demonstração
+### 3. Criar a conta de demonstração
 
 1. Abra o NODUS pela tela inicial (não pelo Safari)
 2. Toque em **"Cadastrar"**
@@ -33,7 +52,7 @@ Agora o app aparece na tela inicial do iPhone igual a um app normal.
 
 > O app vai esperar 5 segundos tentando conectar com o servidor e depois vai criar a conta **localmente, sem internet**. Isso é normal e intencional — o app funciona offline por design.
 
-### 3. Popular o app com dados de demo
+### 4. Popular o app com dados de demo
 
 Depois de entrar, cadastre alguns pacientes e sessões para a tela não aparecer vazia na hora da apresentação. Quanto mais parecido com uso real, melhor a impressão.
 
