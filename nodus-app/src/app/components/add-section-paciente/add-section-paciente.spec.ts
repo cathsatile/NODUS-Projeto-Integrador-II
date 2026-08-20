@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 import { AddSectionPaciente } from './add-section-paciente';
 
@@ -9,6 +12,12 @@ describe('AddSectionPaciente', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AddSectionPaciente],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        { provide: MatDialogRef, useValue: {} },
+        { provide: MAT_DIALOG_DATA, useValue: {} },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AddSectionPaciente);

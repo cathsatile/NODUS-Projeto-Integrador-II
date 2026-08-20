@@ -1,15 +1,23 @@
 {
   "name": "nodus-app",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "NODUS — Sistema de gestão clínica desktop para psicólogos",
+  "main": "electron/main.js",
+  "private": true,
+  "packageManager": "npm@11.9.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "backend:dev": "cd backend && npx ts-node-dev --respawn src/server.ts",
+    "electron:compile": "tsc -p tsconfig.electron.json",
+    "electron:dev": "npm run electron:compile && cross-env NODE_ENV=development electron .",
+    "electron:preview": "ng build --configuration=electron && cd backend && npm run build && cd .. && npm run electron:compile && electron .",
+    "electron:build": "ng build --configuration=electron && cd backend && npm run build && npm run electron:compile && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
-  "private": true,
-  "packageManager": "npm@11.9.0",
   "dependencies": {
     "@angular/cdk": "^21.2.9",
     "@angular/common": "^21.2.0",
@@ -22,6 +30,7 @@
     "@capacitor/android": "^8.3.4",
     "@capacitor/cli": "^8.3.4",
     "@capacitor/core": "^8.3.4",
+    "better-sqlite3": "^12.10.0",
     "chart.js": "^4.5.1",
     "crypto-js": "^4.2.0",
     "dexie": "^4.3.0",
@@ -32,11 +41,67 @@
     "@angular/build": "^21.2.3",
     "@angular/cli": "^21.2.3",
     "@angular/compiler-cli": "^21.2.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/crypto-js": "^4.2.2",
     "@types/jasmine": "^6.0.0",
+    "@types/node": "^20.19.43",
+    "@vitest/coverage-v8": "^4.1.11",
+    "cross-env": "^7.0.3",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
+  },
+  "build": {
+    "appId": "br.uniceub.nodus",
+    "productName": "NODUS",
+    "copyright": "UniCEUB — Projeto Integrador II",
+    "files": [
+      "dist/**/*",
+      "electron/main.js",
+      "backend/dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/node_modules",
+        "to": "backend/node_modules",
+        "filter": [
+          "**/*",
+          "!**/typescript/**",
+          "!**/@types/**",
+          "!**/*.ts"
+        ]
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**",
+      "backend/node_modules/better-sqlite3/**"
+    ],
+    "directories": {
+      "output": "dist-electron"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NODUS"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
