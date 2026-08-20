@@ -1,0 +1,33 @@
+{
+  "name": "nodus-electron-spike",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Spike descartavel: valida Electron + better-sqlite3 + electron-builder antes de integrar ao NODUS de verdade.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "electron-builder install-app-deps",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "br.uniceub.nodus.spike",
+    "productName": "NodusSpike",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist-pkg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
