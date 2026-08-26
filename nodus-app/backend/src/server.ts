@@ -9,14 +9,12 @@ import { authMiddleware } from './middleware/auth.middleware';
 
 dotenv.config();
 
-const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:4200')
-  .split(',').map(o => o.trim());
-
 const app = express();
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite requisições sem origin (ex: mobile nativo, curl, Postman)
-    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+    // null = Electron (file://); localhost:4200 = Angular dev server em loopback
+    const allowed = !origin || origin === 'http://localhost:4200';
+    if (allowed) callback(null, true);
     else callback(new Error(`CORS: origin '${origin}' não permitida`));
   },
   credentials: true,
