@@ -1,75 +1,64 @@
-import { pool } from '../../database/db';
+import { db } from '../../database/db';
 import { Sessao } from './sessao.model';
 
-const COLUNAS = `id_sessao, data, horario, observacoes, humor, status, id_paciente, id_psicologo`;
+const COLUNAS = 'id_sessao, data, horario, observacoes, humor, status, id_paciente, id_psicologo';
 
 export const findAll = async (): Promise<Sessao[]> => {
-  const result = await pool.query(`SELECT ${COLUNAS} FROM sessao`);
-  return result.rows;
+  return db.prepare(`SELECT ${COLUNAS} FROM sessao`).all() as Sessao[];
 };
 
 export const findById = async (id: number): Promise<Sessao | null> => {
-  const result = await pool.query(
-    `SELECT ${COLUNAS} FROM sessao WHERE id_sessao = $1`,
-    [id]
-  );
-  return result.rows[0] ?? null;
+  return (db.prepare(`SELECT ${COLUNAS} FROM sessao WHERE id_sessao = ?`).get(id) as Sessao) ?? null;
 };
 
 export const findByPaciente = async (id_paciente: number): Promise<Sessao[]> => {
-  const result = await pool.query(
-    `SELECT ${COLUNAS} FROM sessao WHERE id_paciente = $1 ORDER BY data DESC, horario DESC`,
-    [id_paciente]
-  );
-  return result.rows;
+  return db.prepare(
+    `SELECT ${COLUNAS} FROM sessao WHERE id_paciente = ? ORDER BY data DESC, horario DESC`,
+  ).all(id_paciente) as Sessao[];
 };
 
 export const findByPsicologo = async (id_psicologo: number): Promise<Sessao[]> => {
-  const result = await pool.query(
-    `SELECT ${COLUNAS} FROM sessao WHERE id_psicologo = $1 ORDER BY data DESC, horario DESC`,
-    [id_psicologo]
-  );
-  return result.rows;
+  return db.prepare(
+    `SELECT ${COLUNAS} FROM sessao WHERE id_psicologo = ? ORDER BY data DESC, horario DESC`,
+  ).all(id_psicologo) as Sessao[];
 };
 
 export const create = async (data: Sessao): Promise<Sessao> => {
-  const result = await pool.query(
+  return db.prepare(
     `INSERT INTO sessao (data, horario, observacoes, humor, id_paciente, id_psicologo)
-     VALUES ($1, $2, $3, $4, $5, $6)
+     VALUES (?, ?, ?, ?, ?, ?)
      RETURNING ${COLUNAS}`,
-    [data.data, data.horario, data.observacoes ?? null, data.humor ?? null, data.id_paciente, data.id_psicologo]
-  );
-  return result.rows[0];
+  ).get(
+    data.data, data.horario, data.observacoes ?? null, data.humor ?? null,
+    data.id_paciente, data.id_psicologo,
+  ) as Sessao;
 };
 
 export const update = async (id: number, data: Partial<Sessao>): Promise<Sessao | null> => {
-  const result = await pool.query(
+  return (db.prepare(
     `UPDATE sessao
-     SET data        = COALESCE($1, data),
-         horario     = COALESCE($2, horario),
-         observacoes = COALESCE($3, observacoes),
-         humor       = COALESCE($4, humor),
-         status      = COALESCE($5, status)
-     WHERE id_sessao = $6
+     SET data        = COALESCE(?, data),
+         horario     = COALESCE(?, horario),
+         observacoes = COALESCE(?, observacoes),
+         humor       = COALESCE(?, humor),
+         status      = COALESCE(?, status)
+     WHERE id_sessao = ?
      RETURNING ${COLUNAS}`,
-    [data.data, data.horario, data.observacoes, data.humor, data.status ?? null, id]
-  );
-  return result.rows[0] ?? null;
+  ).get(
+    data.data ?? null, data.horario ?? null, data.observacoes ?? null,
+    data.humor ?? null, data.status ?? null, id,
+  ) as Sessao) ?? null;
 };
 
 export const remove = async (id: number): Promise<boolean> => {
-  const result = await pool.query('DELETE FROM sessao WHERE id_sessao = $1', [id]);
-  return (result.rowCount ?? 0) > 0;
+  const info = db.prepare('DELETE FROM sessao WHERE id_sessao = ?').run(id);
+  return info.changes > 0;
 };
 
 export const removeByPaciente = async (id_paciente: number): Promise<void> => {
-  await pool.query('DELETE FROM sessao WHERE id_paciente = $1', [id_paciente]);
+  db.prepare('DELETE FROM sessao WHERE id_paciente = ?').run(id_paciente);
 };
 
 export const hasSessoes = async (id_paciente: number): Promise<boolean> => {
-  const result = await pool.query(
-    'SELECT 1 FROM sessao WHERE id_paciente = $1 LIMIT 1',
-    [id_paciente]
-  );
-  return (result.rowCount ?? 0) > 0;
+  return !!db.prepare('SELECT 1 FROM sessao WHERE id_paciente = ? LIMIT 1').get(id_paciente);
 };
