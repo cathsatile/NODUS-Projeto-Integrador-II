@@ -1,21 +1,17 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, EMPTY } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { Sessao, CriarSessaoDto } from './sessao.model';
 import { AuthService } from '../auth/auth.service';
 import { CryptoService } from './crypto';
-import { DbService, SessaoLocal } from '../database/db';
 import { environment } from '../../../environments/environment';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class SessaoService {
   private readonly apiUrl = `${environment.apiUrl}/sessoes`;
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private cryptoService = inject(CryptoService);
-  private db = inject(DbService);
 
   sessoes = signal<Sessao[]>([]);
 
@@ -43,24 +39,6 @@ export class SessaoService {
     }));
   }
 
-  private decifrarLocal(locais: SessaoLocal[]): Sessao[] {
-    const chave = this.authService.chaveCripto();
-    return locais.map(l => ({
-      id_sessao: l.id_sessao,
-      data: l.data,
-      horario: l.horario,
-      observacoes: chave ? this.decifrarObservacoes(l.observacoes, chave) : l.observacoes,
-      humor: l.humor,
-      id_paciente: l.id_paciente,
-      id_psicologo: l.id_psicologo,
-    }));
-  }
-
-  private async atualizarCacheLocal(id_psicologo: number, dados: Sessao[]): Promise<void> {
-    await this.db.sessoes.where('id_psicologo').equals(id_psicologo).delete();
-    await this.db.sessoes.bulkAdd(dados.map(s => ({ ...s } as SessaoLocal)));
-  }
-
   getAll(): Observable<Sessao[]> {
     return this.http.get<Sessao[]>(this.apiUrl).pipe(
       tap(data => this.sessoes.set(this.decifrarLista(data)))
@@ -78,26 +56,14 @@ export class SessaoService {
   }
 
   getByPsicologo(id_psicologo: number): Observable<Sessao[]> {
-    // Carrega cache local via Promise diretamente — sem criar subscription persistente
-    void this.db.sessoes.where('id_psicologo').equals(id_psicologo).toArray().then(locais => {
-      if (locais.length > 0 && this.sessoes().length === 0) {
-        this.sessoes.set(this.decifrarLocal(locais));
-      }
-    });
-
     return this.http.get<Sessao[]>(`${this.apiUrl}/psicologo/${id_psicologo}`).pipe(
-      tap(data => {
-        this.sessoes.set(this.decifrarLista(data));
-        void this.atualizarCacheLocal(id_psicologo, data);
-      }),
-      catchError(() => EMPTY)
+      tap(data => this.sessoes.set(this.decifrarLista(data)))
     );
   }
 
   create(data: CriarSessaoDto): Observable<Sessao> {
     return this.http.post<Sessao>(this.apiUrl, this.cifrar(data)).pipe(
       tap(nova => {
-        void this.db.sessoes.add({ ...nova } as SessaoLocal);
         const chave = this.authService.chaveCripto();
         const novaDecifrada: Sessao = {
           ...nova,
@@ -121,11 +87,6 @@ export class SessaoService {
           ...atualizada,
           observacoes: chave ? this.decifrarObservacoes(atualizada.observacoes, chave) : atualizada.observacoes,
         };
-        void this.db.sessoes.where('id_sessao').equals(id).modify({
-          status: atualizada.status,
-          humor: atualizada.humor,
-          observacoes: atualizada.observacoes,
-        });
         this.sessoes.update(lista =>
           lista.map(s => s.id_sessao === id ? decifrada : s)
         );
@@ -135,9 +96,7 @@ export class SessaoService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      tap(() => this.sessoes.update(lista =>
-        lista.filter(s => s.id_sessao !== id)
-      ))
+      tap(() => this.sessoes.update(lista => lista.filter(s => s.id_sessao !== id)))
     );
   }
 }
