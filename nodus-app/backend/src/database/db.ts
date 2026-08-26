@@ -1,42 +1,82 @@
-import { Pool } from 'pg';
+import Database from 'better-sqlite3';
+import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-});
+// Banco embarcado — arquivo único local, sem servidor externo (ver PLANO-CONVERSAO-DESKTOP.md).
+// DB_PATH é opcional; por padrão o arquivo fica dentro de backend/, ao lado do código.
+const dbPath = process.env.DB_PATH ?? path.join(__dirname, '../../nodus.db');
 
-// Garante que a coluna horario existe na tabela sessao
-// (o schema original não a incluía)
-pool.query(`
-    ALTER TABLE sessao
-    ADD COLUMN IF NOT EXISTS horario VARCHAR(10);
-`).catch(err => console.error('[db] Erro ao aplicar migration de horario:', err));
+export const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
 
-pool.query(`
-    ALTER TABLE sessao
-    ADD COLUMN IF NOT EXISTS humor INTEGER;
-`).catch(err => console.error('[db] Erro ao aplicar migration de humor:', err));
+// Schema completo criado na primeira execução — não há mais migrations incrementais
+// (ALTER TABLE) porque não existe um banco de produção anterior a preservar: cada
+// instalação do app começa com o arquivo SQLite já no formato final.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS psicologo (
+    id_psicologo          INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome                  TEXT NOT NULL,
+    email                 TEXT NOT NULL UNIQUE,
+    senha                 TEXT NOT NULL,
+    registro_profissional TEXT NOT NULL
+  );
 
-// Converte colunas de paciente para TEXT para suportar dados criptografados (AES+base64)
-pool.query(`
-    ALTER TABLE paciente
-        ALTER COLUMN nome TYPE TEXT,
-        ALTER COLUMN email TYPE TEXT,
-        ALTER COLUMN data_nascimento TYPE TEXT USING data_nascimento::TEXT;
-`).catch(err => console.error('[db] Erro ao aplicar migration de colunas paciente:', err));
+  CREATE TABLE IF NOT EXISTS paciente (
+    id_paciente     INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome            TEXT NOT NULL,
+    email           TEXT NOT NULL,
+    senha           TEXT,
+    data_nascimento TEXT NOT NULL,
+    id_psicologo    INTEGER NOT NULL REFERENCES psicologo(id_psicologo)
+  );
 
-// senha do paciente passa a ser opcional (fluxo de cadastro via psicólogo não requer senha)
-pool.query(`
-    ALTER TABLE paciente ALTER COLUMN senha DROP NOT NULL;
-`).catch(err => console.error('[db] Erro ao aplicar migration de senha nullable:', err));
+  CREATE TABLE IF NOT EXISTS sessao (
+    id_sessao    INTEGER PRIMARY KEY AUTOINCREMENT,
+    data         TEXT NOT NULL,
+    horario      TEXT,
+    observacoes  TEXT,
+    humor        INTEGER,
+    status       TEXT,
+    id_paciente  INTEGER NOT NULL REFERENCES paciente(id_paciente),
+    id_psicologo INTEGER NOT NULL REFERENCES psicologo(id_psicologo)
+  );
+`);
 
-// coluna status para registrar o resultado de cada sessão
-pool.query(`
-    ALTER TABLE sessao ADD COLUMN IF NOT EXISTS status VARCHAR(50);
-`).catch(err => console.error('[db] Erro ao aplicar migration de status:', err));
+// --- Camada de compatibilidade com a interface pg.Pool ---
+// Os repositories (paciente/sessao/psicologo) ainda chamam `pool.query(sql, params)`
+// com placeholders $1,$2... e cláusulas RETURNING, no estilo node-postgres. Em vez de
+// reescrever os cinco arquivos de repository no mesmo passo, este adaptador traduz
+// essas chamadas para a API síncrona do better-sqlite3, mantendo o formato de retorno
+// { rows, rowCount } que os repositories já esperam. Isso é intencionalmente provisório:
+// a migração dos repositories para a API nativa (stmt.get/.all/.run) é o próximo passo
+// descrito no PLANO-CONVERSAO-DESKTOP.md, não algo a resolver nesta etapa.
+function paraSintaxeSqlite(sql: string): string {
+  return sql.replace(/\$\d+/g, '?');
+}
+
+function normalizarParametros(params: unknown[]): unknown[] {
+  return params.map((p) => (p === undefined ? null : p));
+}
+
+export const pool = {
+  query: async (
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<{ rows: any[]; rowCount: number }> => {
+    const sqlSqlite = paraSintaxeSqlite(sql).trim();
+    const valores = normalizarParametros(params);
+    const stmt = db.prepare(sqlSqlite);
+    const retornaLinhas = /^SELECT/i.test(sqlSqlite) || /RETURNING/i.test(sqlSqlite);
+
+    if (retornaLinhas) {
+      const rows = stmt.all(...valores);
+      return { rows, rowCount: rows.length };
+    }
+
+    const info = stmt.run(...valores);
+    return { rows: [], rowCount: info.changes };
+  },
+};
