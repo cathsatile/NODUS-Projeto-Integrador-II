@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-frontend:
+    name: Frontend — testes e cobertura
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nodus-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nodus-app/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Executar testes com cobertura
+        run: npx ng test --no-watch --coverage
+
+      - name: Upload relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: nodus-app/coverage/
+          retention-days: 7
+
+  test-backend:
+    name: Backend — tipos, testes e cobertura
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nodus-app/backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nodus-app/backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar tipos TypeScript
+        run: npm run typecheck
+
+      - name: Executar testes com cobertura
+        run: npm run test:coverage
+
+      - name: Upload relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: nodus-app/backend/coverage/
+          retention-days: 7

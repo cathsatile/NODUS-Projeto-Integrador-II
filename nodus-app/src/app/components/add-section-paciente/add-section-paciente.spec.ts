@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 import { AddSectionPaciente } from './add-section-paciente';
 
@@ -9,6 +10,10 @@ describe('AddSectionPaciente', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AddSectionPaciente],
+      providers: [
+        { provide: MatDialogRef, useValue: { close: () => {} } },
+        { provide: MAT_DIALOG_DATA, useValue: { add: 'sessao' } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AddSectionPaciente);

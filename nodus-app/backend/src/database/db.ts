@@ -45,38 +45,3 @@ db.exec(`
   );
 `);
 
-// --- Camada de compatibilidade com a interface pg.Pool ---
-// Os repositories (paciente/sessao/psicologo) ainda chamam `pool.query(sql, params)`
-// com placeholders $1,$2... e cláusulas RETURNING, no estilo node-postgres. Em vez de
-// reescrever os cinco arquivos de repository no mesmo passo, este adaptador traduz
-// essas chamadas para a API síncrona do better-sqlite3, mantendo o formato de retorno
-// { rows, rowCount } que os repositories já esperam. Isso é intencionalmente provisório:
-// a migração dos repositories para a API nativa (stmt.get/.all/.run) é o próximo passo
-// descrito no PLANO-CONVERSAO-DESKTOP.md, não algo a resolver nesta etapa.
-function paraSintaxeSqlite(sql: string): string {
-  return sql.replace(/\$\d+/g, '?');
-}
-
-function normalizarParametros(params: unknown[]): unknown[] {
-  return params.map((p) => (p === undefined ? null : p));
-}
-
-export const pool = {
-  query: async (
-    sql: string,
-    params: unknown[] = [],
-  ): Promise<{ rows: any[]; rowCount: number }> => {
-    const sqlSqlite = paraSintaxeSqlite(sql).trim();
-    const valores = normalizarParametros(params);
-    const stmt = db.prepare(sqlSqlite);
-    const retornaLinhas = /^SELECT/i.test(sqlSqlite) || /RETURNING/i.test(sqlSqlite);
-
-    if (retornaLinhas) {
-      const rows = stmt.all(...valores);
-      return { rows, rowCount: rows.length };
-    }
-
-    const info = stmt.run(...valores);
-    return { rows: [], rowCount: info.changes };
-  },
-};

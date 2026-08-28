@@ -1,64 +1,45 @@
-/*
-codigo gerado pelo claude e (se deus quiser) corrigido por miguel
-esse arquivo comunica com o banco usando SQL. Claude fez de maneira bem assíncrona (todas as const com async/await) porque se fosse linear ia ser muito lento. 
-
-claude também omitiu a senha do SELECT pela segurança.
-*/
-
-import { pool } from '../../database/db';
+import { db } from '../../database/db';
 import { Psicologo } from './psicologo.model';
 
+const COLUNAS_PUBLICAS = 'id_psicologo, nome, email, registro_profissional';
+
 export const findAll = async (): Promise<Psicologo[]> => {
-  const result = await pool.query(
-    'SELECT id_psicologo, nome, email, registro_profissional FROM psicologo'
-  );
-  return result.rows;
+  return db.prepare(`SELECT ${COLUNAS_PUBLICAS} FROM psicologo`).all() as Psicologo[];
 };
 
 export const findById = async (id: number): Promise<Psicologo | null> => {
-  const result = await pool.query(
-    'SELECT id_psicologo, nome, email, registro_profissional FROM psicologo WHERE id_psicologo = $1',
-    [id]
-  );
-  return result.rows[0] ?? null;
+  return (db.prepare(
+    `SELECT ${COLUNAS_PUBLICAS} FROM psicologo WHERE id_psicologo = ?`,
+  ).get(id) as Psicologo) ?? null;
 };
 
 export const create = async (data: Psicologo): Promise<Psicologo> => {
-  const result = await pool.query(
+  return db.prepare(
     `INSERT INTO psicologo (nome, email, senha, registro_profissional)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id_psicologo, nome, email, registro_profissional`,
-    [data.nome, data.email, data.senha, data.registro_profissional]
-  );
-  return result.rows[0];
+     VALUES (?, ?, ?, ?)
+     RETURNING ${COLUNAS_PUBLICAS}`,
+  ).get(data.nome, data.email, data.senha, data.registro_profissional) as Psicologo;
 };
 
 export const update = async (id: number, data: Partial<Psicologo>): Promise<Psicologo | null> => {
-  const result = await pool.query(
+  return (db.prepare(
     `UPDATE psicologo
-     SET nome = COALESCE($1, nome),
-         email = COALESCE($2, email),
-         registro_profissional = COALESCE($3, registro_profissional)
-     WHERE id_psicologo = $4
-     RETURNING id_psicologo, nome, email, registro_profissional`,
-    [data.nome, data.email, data.registro_profissional, id]
-  );
-  return result.rows[0] ?? null;
+     SET nome                  = COALESCE(?, nome),
+         email                 = COALESCE(?, email),
+         registro_profissional = COALESCE(?, registro_profissional)
+     WHERE id_psicologo = ?
+     RETURNING ${COLUNAS_PUBLICAS}`,
+  ).get(data.nome ?? null, data.email ?? null, data.registro_profissional ?? null, id) as Psicologo) ?? null;
 };
 
 export const remove = async (id: number): Promise<boolean> => {
-  const result = await pool.query(
-    'DELETE FROM psicologo WHERE id_psicologo = $1',
-    [id]
-  );
-  return (result.rowCount ?? 0) > 0;
+  const info = db.prepare('DELETE FROM psicologo WHERE id_psicologo = ?').run(id);
+  return info.changes > 0;
 };
 
 // inclui senha para comparação no fluxo de autenticação — não usar em outras queries
 export const findByEmail = async (email: string): Promise<Psicologo | null> => {
-  const result = await pool.query(
-    'SELECT id_psicologo, nome, email, senha, registro_profissional FROM psicologo WHERE email = $1',
-    [email]
-  );
-  return result.rows[0] ?? null;
+  return (db.prepare(
+    'SELECT id_psicologo, nome, email, senha, registro_profissional FROM psicologo WHERE email = ?',
+  ).get(email) as Psicologo) ?? null;
 };
