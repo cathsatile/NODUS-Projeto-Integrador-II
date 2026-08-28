@@ -37,8 +37,8 @@ jobs:
           path: nodus-app/coverage/
           retention-days: 7
 
-  typecheck-backend:
-    name: Backend — verificação de tipos
+  test-backend:
+    name: Backend — tipos, testes e cobertura
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,4 +57,15 @@ jobs:
         run: npm ci
 
       - name: Verificar tipos TypeScript
-        run: npx tsc --noEmit
+        run: npm run typecheck
+
+      - name: Executar testes com cobertura
+        run: npm run test:coverage
+
+      - name: Upload relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: nodus-app/backend/coverage/
+          retention-days: 7
