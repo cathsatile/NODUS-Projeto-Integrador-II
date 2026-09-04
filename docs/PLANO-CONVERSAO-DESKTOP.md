@@ -68,14 +68,14 @@ Máquina do profissional — aplicativo desktop empacotado (Electron)
 
 Ponto central da justificativa do relatório: como a chave de criptografia nunca sai da máquina do usuário, um servidor remoto **nunca conseguiria** decifrar o conteúdo clínico para montar relatórios — daí a decisão de colocar tudo no mesmo processo.
 
-### 3.1 Decisão em aberto que o relatório não resolve: front↔back é HTTP local ou IPC?
+### 3.1 [DECIDIDO em 28/08] front↔back é HTTP local, não IPC
 
-O diagrama da Seção 8 mostra "eventos da interface" entre as camadas sem especificar o mecanismo. Há duas opções, com trade-off direto no cronograma do Sprint 1:
+O diagrama da Seção 8 mostra "eventos da interface" entre as camadas sem especificar o mecanismo. Havia duas opções, com trade-off direto no cronograma do Sprint 1:
 
 - **Opção A — manter Express, mas em loopback (`127.0.0.1`), iniciado pelo processo principal do Electron.** O front continua usando `HttpClient` e o `auth.interceptor.ts` quase como está hoje; só troca a porta e o host fixo, e remove CORS multi-origem (não é mais necessário, é o mesmo processo). **Menor esforço de refatoração**, reaproveita ~90% do código de services do frontend.
 - **Opção B — IPC nativo do Electron** (`contextBridge` + `ipcMain`/`ipcRenderer`), eliminando o servidor HTTP por completo. Mais "correto" do ponto de vista de Electron (sem stack de rede desnecessária), mas exige reescrever todos os services Angular que hoje chamam `HttpClient`.
 
-**Recomendação**: seguir com a **Opção A** no Sprint 1, dado o prazo de duas semanas e o objetivo explícito da equipe de "reduzir a curva de aprendizado reaproveitando a camada de serviços existente" (justificativa da própria Seção 8.1 para escolher Node.js no back-end). IPC pode ser revisitado depois da entrega funcional, se sobrar tempo — não é bloqueador de nenhuma US do backlog.
+**Decisão: Opção A**, tratada como arquitetura definitiva (não um placeholder para migrar depois "se sobrar tempo") — dado o prazo de duas semanas e o objetivo explícito da equipe de "reduzir a curva de aprendizado reaproveitando a camada de serviços existente" (justificativa da própria Seção 8.1 para escolher Node.js no back-end). Tracking da execução: issue [#27](https://github.com/cathsatile/NODUS-Projeto-Integrador-II/issues/27). IPC só volta à mesa se surgir um motivo concreto (requisito de segurança específico, medição real de performance) — não por padrão.
 
 ---
 
@@ -134,8 +134,8 @@ O backlog (Seção 4.1) define três itens de Alta prioridade para o Sprint 1 �
 
 ## 6. Decisões e simplificações recomendadas (para alinhar com o time antes de codar)
 
-1. **Simplificar autenticação**: trocar JWT+Bearer por um modelo mais simples de "sessão desbloqueada em memória" (a chave AES já vive em memória via signal, segundo o `CLAUDE.md`; o JWT de 8h e o interceptor HTTP passam a ser redundantes já que não há mais fronteira de rede real a proteger). Isso reduz complexidade sem violar nenhum RF/RNF do relatório — RF04 só pede autenticação por senha + derivação de chave, não pede JWT.
-2. **Confirmar com o time se o app continua "multiusuário por instalação"**: o `CLAUDE.md` atual modela múltiplos psicólogos com `id_psicologo` como FK em tudo. O relatório (Seção 1.1) é explícito: **"O NODUS é uma ferramenta de uso individual... não há perfis de múltiplos usuários"**. Isso simplifica bastante o modelo (posse de dados deixa de precisar de verificação por request), mas é uma decisão de escopo que vale confirmar antes de remover código de multiusuário — pode ser mantido "por baixo" sem UI de troca de usuário, para não fechar a porta a uma versão futura multiperfil.
+1. **[DECIDIDO em 28/08] Simplificar autenticação**: trocar JWT+Bearer por um modelo mais simples de "sessão desbloqueada em memória" (a chave AES já vive em memória via signal, segundo o `CLAUDE.md`; o JWT de 8h e o interceptor HTTP passam a ser redundantes já que não há mais fronteira de rede real a proteger). Isso reduz complexidade sem violar nenhum RF/RNF do relatório — RF04 só pede autenticação por senha + derivação de chave, não pede JWT. Tracking: issue [#28](https://github.com/cathsatile/NODUS-Projeto-Integrador-II/issues/28).
+2. **[DECIDIDO em 28/08] App é single-user por instalação, mas `id_psicologo` fica "por baixo"**: o relatório (Seção 1.1) é explícito: **"O NODUS é uma ferramenta de uso individual... não há perfis de múltiplos usuários"**. Times confirmou manter `id_psicologo` como FK/coluna no schema e os checks de posse (`403 Acesso negado`) nos controllers de `paciente`/`sessao`, sem UI de troca de usuário — a fonte de `req.psicologoId` passa a vir da sessão em memória (issue #28) em vez do JWT, mas os 6 checks de posse existentes (`paciente.controller.ts`, `sessao.controller.ts`) não são removidos. Motivo: manter a porta aberta para uma versão multiperfil futura (visão de produto comercial) custa pouco agora; remover e ter que trazer de volta depois custaria uma reescrita de schema + migração.
 3. **Congelar, não apagar, a trilha mobile/Capacitor** — reversível e barato de manter parado; caro de refazer do zero se decidirem retomar.
 4. **Preparar a base de demonstração com dados fictícios já na Sprint 2**, conforme a própria recomendação do relatório (Seção 10) — evita expor dados reais da paciente atendida durante a banca.
 

@@ -12,8 +12,10 @@ dotenv.config();
 const app = express();
 app.use(cors({
   origin: (origin, callback) => {
-    // null = Electron (file://); localhost:4200 = Angular dev server em loopback
-    const allowed = !origin || origin === 'http://localhost:4200';
+    // null = Electron (file://)
+    // localhost/127.0.0.1 em qualquer porta = Angular dev server (:4200) OU
+    // servidor estático interno do Electron em produção (porta é aleatória)
+    const allowed = !origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
     if (allowed) callback(null, true);
     else callback(new Error(`CORS: origin '${origin}' não permitida`));
   },
