@@ -1,16 +1,18 @@
 # NODUS — Sistema de Gestão Clínica e Monitoramento Terapêutico
 
 ## Visão Geral do Projeto
-NODUS é um app Mobile-First para gestão clínica de psicólogos. Roda em WebView via **Capacitor** no Android. Prioridade absoluta: segurança dos dados clínicos (LGPD) e funcionamento offline.
+NODUS é um aplicativo **desktop de uso individual** para gestão clínica de psicólogos: front-end Angular + back-end Node/Express local, ambos empacotados (via Electron, ver "Empacotamento Desktop" abaixo) num único executável, sem servidor remoto e sem múltiplos usuários por instalação. Prioridade absoluta: dados clínicos sempre cifrados em disco (LGPD) e funcionamento 100% offline — não há mais "modo offline" a tratar, porque não existe mais servidor remoto do qual desconectar.
+
+> O projeto está em pivô de arquitetura (mobile/Capacitor/PostgreSQL → desktop/Electron/SQLite). Este arquivo descreve o **estado atual do código**, não o alvo final. Para o racional completo do pivô, decisões em aberto e o que ainda falta, ver [`docs/PLANO-CONVERSAO-DESKTOP.md`](../docs/PLANO-CONVERSAO-DESKTOP.md) (na raiz do repositório, um nível acima de `nodus-app/`).
 
 ---
 
 ## Pilares Técnicos (NÃO negociáveis)
 
 1. **Angular Moderno**: Use EXCLUSIVAMENTE Standalone Components e Signals (`signal()`, `computed()`, `effect()`). Evite RxJS Subjects desnecessários.
-2. **Offline-First**: Toda persistência inicial ocorre localmente no IndexedDB via **Dexie.js**. Sincronização com PostgreSQL (back-end) é secundária.
-3. **Segurança Estrita (LGPD)**: Dados clínicos (notas de sessão, prontuários, humor) são ultra-sensíveis. Criptografe SEMPRE com **Crypto-JS (AES-256)** ANTES de salvar no Dexie.js ou enviar para a API. Nunca salve texto plano de dados clínicos.
-4. **Modularização**: Lógica de banco, criptografia e HTTP ficam em Services. Componentes devem ser majoritariamente "burros" (presentational), focados em UX mobile.
+2. **Local-first de verdade**: Não há mais cache/IndexedDB no front (Dexie foi removido) — o front fala diretamente com o back-end local via `HttpClient`, que é a única fonte de verdade. O "banco" é um arquivo SQLite (`better-sqlite3`) na máquina do profissional, sem sincronização com nada.
+3. **Segurança Estrita (LGPD)**: Dados clínicos (notas de sessão, prontuários, humor) são ultra-sensíveis. Criptografe SEMPRE com **Crypto-JS (AES-256)** ANTES de enviar para a API. Nunca salve texto plano de dados clínicos.
+4. **Modularização**: Lógica de banco, criptografia e HTTP ficam em Services. Componentes devem ser majoritariamente "burros" (presentational).
 
 ---
 
@@ -22,14 +24,14 @@ src/app/
   │   ├── auth/          # AuthService (sessão + JWT + sinal psicologoAtual + chave AES em memória)
   │   ├── guards/        # authGuard (CanActivateFn)
   │   ├── interceptors/  # authInterceptor (Bearer token + logout em 401)
-  │   ├── database/      # DbService — Dexie.js (offline IndexedDB, schema v3)
-  │   └── services/      # CryptoService, PacienteService, SessaoService, PsicologoService,
-  │                      # NetworkStatusService, emocoes.ts
+  │   └── services/      # CryptoService, PacienteService, SessaoService, PsicologoService, emocoes.ts
   ├── pages/             # Login, Principal, HomePage, Pacientes, Agenda, Sections,
   │                      # InfoPaciente, PsicologoProfile
   ├── components/        # Header, Navbar, AddSectionPaciente, SessoesDia
   └── environments/      # environment.ts (dev), environment.prod.ts (prod)
 ```
+
+`core/database/` (Dexie/IndexedDB) e `core/services/network-status.service.ts` **não existem mais** — foram removidos junto com a lógica offline-first, que perdeu sentido sem servidor remoto.
 
 **Regra de dependência**: `pages/` e `components/` importam de `core/`. Nunca o inverso.
 
@@ -39,87 +41,89 @@ src/app/
 
 ### Backend
 - **Runtime**: Node.js + Express + TypeScript (`ts-node-dev`)
-- **Banco**: PostgreSQL 18, banco `nodus`, usuário `postgres`
-- **Porta**: 3000
-- **Arquivo de configuração**: `backend/.env` (não commitar)
+- **Banco**: SQLite embarcado via `better-sqlite3` — arquivo único, sem servidor de banco (ver seção seguinte)
+- **Porta**: 3000 (loopback — front e back rodam na mesma máquina)
+- **Arquivo de configuração**: `backend/.env` (não commitar; ver `backend/.env.example`)
 - **Rodar**: `cd backend && npm run dev`
 
 ```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=<senha_local>
-DB_NAME=nodus
-JWT_SECRET=nodus_local_secret_2026
+# DB_PATH é opcional — por padrão o arquivo fica em backend/nodus.db.
+# Fora do dev, o Electron deve apontar isso para app.getPath('userData').
+DB_PATH=/caminho/opcional/para/nodus.db
+JWT_SECRET=troque_por_um_secret_longo_e_aleatorio
 PORT=3000
-FRONTEND_ORIGIN=http://localhost:4200,https://localhost,capacitor://localhost
 ```
 
-> `FRONTEND_ORIGIN` aceita múltiplas origens separadas por vírgula. Necessário para o Capacitor WebView (`https://localhost`) e o browser de dev (`http://localhost:4200`).
+> CORS foi simplificado para o modelo loopback: só aceita origem `http://localhost:4200` (dev do Angular) ou requisições sem origem (Electron via `file://`). Não há mais `FRONTEND_ORIGIN` multi-origem — isso era necessário só para o WebView do Capacitor, que está congelado (ver seção "Trilha mobile" abaixo).
 
 ### Frontend
 - **Framework**: Angular 21, Standalone Components, Signals
 - **Porta**: 4200
 - **Rodar**: `npm start` na raiz de `nodus-app/`
 - **Build**: `npm run build`
-- **Sync Android**: `npx cap sync android`
 
-### Banco de Dados (schema atual — com migrations aplicadas)
+### Empacotamento Desktop (Electron) — planejado, ainda não implementado neste diretório
+O alvo (RF01/RF02/RF05 do relatório) é um processo principal Electron que abre a janela, sobe este mesmo backend Express em loopback e grava o SQLite em `app.getPath('userData')`. **Hoje isso ainda não existe em `nodus-app/`** — nem `electron`/`electron-builder` nas dependências, nem `electron/main.ts`. A prova de conceito que validou `electron-builder` + `better-sqlite3` (nativo, compilado por plataforma) vive isolada em `electron-spike/` na raiz do repositório e só foi testada em Linux; a validação em Windows (plataforma-alvo do instalador) ainda está pendente. Detalhes e o backlog completo (E1–E7) estão em `docs/PLANO-CONVERSAO-DESKTOP.md`, seção 5.
+
+### Banco de Dados (schema atual — SQLite, `backend/src/database/db.ts`)
 
 ```sql
-CREATE TABLE psicologo (
-  id_psicologo          SERIAL PRIMARY KEY,
-  nome                  VARCHAR(150) NOT NULL,
-  email                 VARCHAR(150) NOT NULL UNIQUE,
-  senha                 TEXT NOT NULL,           -- bcrypt hash
-  registro_profissional VARCHAR(50)  NOT NULL
+CREATE TABLE IF NOT EXISTS psicologo (
+  id_psicologo          INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome                  TEXT NOT NULL,
+  email                 TEXT NOT NULL UNIQUE,
+  senha                 TEXT NOT NULL,              -- bcrypt hash
+  registro_profissional TEXT NOT NULL
 );
 
-CREATE TABLE paciente (
-  id_paciente     SERIAL PRIMARY KEY,
-  nome            TEXT NOT NULL,                 -- AES-256 base64
-  email           TEXT NOT NULL,                 -- AES-256 base64
-  senha           TEXT,                          -- nullable: pacientes não fazem login
-  data_nascimento TEXT NOT NULL,                 -- AES-256 base64
+CREATE TABLE IF NOT EXISTS paciente (
+  id_paciente     INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome            TEXT NOT NULL,                    -- AES-256 base64
+  email           TEXT NOT NULL,                    -- AES-256 base64
+  senha           TEXT,                             -- nullable: pacientes não fazem login
+  data_nascimento TEXT NOT NULL,                    -- AES-256 base64
+  codigo_publico  TEXT NOT NULL DEFAULT (lower(hex(randomblob(8)))),
   id_psicologo    INTEGER NOT NULL REFERENCES psicologo(id_psicologo)
 );
 
-CREATE TABLE sessao (
-  id_sessao    SERIAL PRIMARY KEY,
-  data         TIMESTAMP NOT NULL,
-  horario      VARCHAR(5),                       -- formato HH:MM
-  observacoes  TEXT,                             -- AES-256 base64
-  humor        INTEGER,                          -- 1-11 (ver emocoes.ts)
-  status       VARCHAR(50),                      -- realizada | cancelada_paciente |
-                                                 -- cancelada_psicologo | nao_compareceu | remarcada
-  id_paciente  INTEGER NOT NULL REFERENCES paciente(id_paciente),
-  id_psicologo INTEGER NOT NULL REFERENCES psicologo(id_psicologo)
+CREATE TABLE IF NOT EXISTS sessao (
+  id_sessao     INTEGER PRIMARY KEY AUTOINCREMENT,
+  data          TEXT NOT NULL,
+  horario       TEXT,                               -- formato HH:MM
+  observacoes   TEXT,                                -- AES-256 base64
+  humor         INTEGER,                             -- 1-11 (ver emocoes.ts)
+  status        TEXT,                                -- realizada | cancelada_paciente |
+                                                       -- cancelada_psicologo | nao_compareceu | remarcada
+  id_modelo     INTEGER REFERENCES modelo_sessao(id_modelo),
+  versao_modelo INTEGER,
+  id_paciente   INTEGER NOT NULL REFERENCES paciente(id_paciente),
+  id_psicologo  INTEGER NOT NULL REFERENCES psicologo(id_psicologo)
 );
+
+-- modelo_sessao, campo_modelo, valor_campo, consentimento, documento e anexo
+-- também já existem no schema (modelos de sessão configuráveis, consentimentos,
+-- documentos e anexos cifrados — ver ERD em docs/NODUS-Relatorio-PI3-Documento-Software-V1.pdf,
+-- seção 7). Ainda SEM repository/service/controller — schema pronto, funcionalidade das
+-- Sprints 3+ (US08 em diante). Não usar essas tabelas até essa camada existir.
 ```
 
-> As migrations são aplicadas automaticamente no startup do backend (`backend/src/database/db.ts`). Não é necessário rodar SQL manualmente.
+> Não há mais migrations incrementais (`ALTER TABLE`). O schema inteiro é criado com `CREATE TABLE IF NOT EXISTS` na primeira execução (`backend/src/database/db.ts`) — cada instalação começa com o banco já no formato final. Para importar dados do protótipo antigo em PostgreSQL, existe `backend/scripts/migrate-postgres-to-sqlite.ts` (operação única, não roda no startup).
 
 ---
 
-## Estado Atual — Tudo Implementado
+## Estado Atual — o que já funciona
 
-### Autenticação
+### Autenticação (hoje ainda JWT — mudança de modelo já decidida, não implementada)
 - `POST /api/auth/login` e `POST /api/auth/register` com JWT de 8h e bcrypt
 - Guard `authGuard` protege `/principal`; interceptor injeta Bearer token
 - PBKDF2 com 100.000 iterações deriva a chave AES-256 da senha no login
 - Chave AES existe apenas em memória (signal `_chaveCripto`); nunca em localStorage
+- **Pendente**: o time já decidiu (ver `docs/PLANO-CONVERSAO-DESKTOP.md`, seção 6, item 1) substituir JWT/Bearer por uma sessão simples em memória, já que não há mais fronteira de rede real a proteger — RF04 só exige senha + derivação de chave, não exige JWT. Essa troca ainda não foi implementada; `auth.service.ts`, `auth.middleware.ts` e `auth.interceptor.ts` continuam com o fluxo JWT descrito acima até essa migração acontecer.
 
 ### Segurança (Backend)
 - `authMiddleware` JWT aplicado em todas as rotas protegidas
-- Controllers verificam posse: psicólogo só acessa seus próprios pacientes/sessões
-- CORS multi-origem via `FRONTEND_ORIGIN` no `.env`
-- `capacitor.config.ts`: `allowMixedContent: true` para WebView Android
-
-### Offline-First (Dexie.js — schema v3)
-- `PacienteService`: cache-first — lê do Dexie, sincroniza em background; create/update/delete gravam localmente
-- `SessaoService`: idem; `update()` persiste status, humor e observacoes no IndexedDB
-- `NetworkStatusService`: signal `isOnline` reativo a eventos `online`/`offline`
-- Header exibe banner "Sem conexão..." automaticamente quando offline
+- Controllers verificam posse: psicólogo só acessa seus próprios pacientes/sessões (retorna `403 Acesso negado` — ver `sessao.controller.ts`/`paciente.controller.ts`). Esses checks continuam mesmo após a troca de auth planejada, porque `id_psicologo` permanece no schema mesmo sendo o app de um único profissional por instalação (decisão registrada no plano, seção 6, item 2).
+- CORS restrito a loopback (`http://localhost:4200` ou sem origem) — ver `backend/src/server.ts`
 
 ### Emoções Clínicas (`core/services/emocoes.ts`)
 Arquivo central com 11 emoções clínicas e 5 status de sessão. **Não duplicar esta lógica em componentes.**
@@ -171,6 +175,12 @@ Funções exportadas: `emocaoLabel(valor)`, `emocaoEmoji(valor)`, `statusLabel(v
 - Lista todas as sessões do paciente, ordenadas por data decrescente
 - Exibe emoção (emoji + label) e status usando `emocoes.ts`
 
+### Ainda não implementado no código (existe no schema e/ou no backlog, não na aplicação)
+- Bloqueio automático por inatividade (RF05, US05)
+- Modelos de sessão configuráveis, campos customizados, linha do tempo (RF08–RF13, US08–US12)
+- Consentimentos, documentos em PDF, anexos cifrados (RF14–RF18, US13–US16)
+- Empacotamento Electron (ver seção acima)
+
 ---
 
 ## Regras de Código
@@ -181,18 +191,18 @@ Funções exportadas: `emocaoLabel(valor)`, `emocaoEmoji(valor)`, `statusLabel(v
 - Use `effect()` apenas para side effects explícitos.
 
 ### Serviços
-- `CryptoService`: cifra/decifra strings AES-256. Nunca acessa o Dexie diretamente.
-- `DbService`: lê/escreve no Dexie.js. Nunca cifra por conta própria.
+- `CryptoService`: cifra/decifra strings AES-256.
 - `AuthService`: gerencia sessão e chave AES em memória. Nunca expõe a chave em texto plano.
+- `PacienteService` / `SessaoService`: falam diretamente com o backend local via `HttpClient` — não há mais camada de cache/sincronização a manter.
 - `emocoes.ts`: fonte única de verdade para emoções e status. Nunca duplicar listas de emoções em componentes.
 
 ### Componentes
-- Componentes NÃO fazem chamadas diretas ao DbService ou CryptoService.
+- Componentes NÃO fazem chamadas diretas a `CryptoService` nem `HttpClient` — sempre via os services de `core/`.
 - Formulários usam Reactive Forms + Signals para loading/erro.
 - Não use `DatePipe` com locale `'pt-BR'` — o locale não está registrado no `app.config.ts`. Formate datas manualmente ou use `slice(0,10)`.
 
-### UX Mobile
-- Inputs com espaçamento generoso para toque.
+### UX
+- Inputs com espaçamento generoso para toque (herdado do desenho mobile-first original; mantido por ora no desktop).
 - Feedback visual imediato em todas as ações (loading, sucesso, erro).
 - Modais usam `position: { bottom: '0' }` e `panelClass: 'bottom-modal'` para sheet behavior.
 
@@ -202,18 +212,9 @@ Funções exportadas: `emocaoLabel(valor)`, `emocaoEmoji(valor)`, `statusLabel(v
 
 ---
 
-## Integrações Nativas (Capacitor)
+## Trilha mobile (Capacitor) — congelada, não removida
 
-- App configurado para Android: `capacitor.config.ts` com `allowMixedContent: true`
-- Backend acessível pelo celular via IP da máquina (configurado em `environment.ts`)
-- **Camera**: planejada para digitalizar documentos — não implementada ainda
-
-### Fluxo de deploy para o celular
-```bash
-npm run build          # gera dist/
-npx cap sync android   # copia assets para o projeto Android
-npx cap open android   # abre no Android Studio para rodar
-```
+O app era originalmente mobile-first via Capacitor/Android. Essa trilha foi **congelada, não descartada**: `android/` e `capacitor.config.ts` foram movidos para a branch `frozen/mobile-capacitor` (detalhes em `docs/mobile-congelado.md`). `@capacitor/android`, `@capacitor/cli` e `@capacitor/core` ainda aparecem em `package.json` como dependências órfãs — não quebram o build do Angular, mas devem ser removidas quando o time confirmar que a trilha mobile não volta no curto prazo. Não reintroduzir código Capacitor sem consultar esse documento primeiro.
 
 ---
 
