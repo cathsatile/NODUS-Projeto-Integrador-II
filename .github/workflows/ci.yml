@@ -69,3 +69,50 @@ jobs:
           name: coverage-backend
           path: nodus-app/backend/coverage/
           retention-days: 7
+
+  build-desktop:
+    name: Desktop — empacotamento Electron
+    needs: [test-frontend, typecheck-backend]
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            nodus-app/package-lock.json
+            nodus-app/backend/package-lock.json
+
+      - name: Instalar dependências (frontend + Electron)
+        working-directory: nodus-app
+        run: npm ci
+
+      - name: Instalar dependências (backend)
+        working-directory: nodus-app/backend
+        run: npm ci
+
+      - name: Build Angular
+        working-directory: nodus-app
+        run: npx ng build --configuration production
+
+      - name: Compilar backend
+        working-directory: nodus-app/backend
+        run: npx tsc --noEmit false
+
+      - name: Compilar processo main Electron
+        working-directory: nodus-app
+        run: npx tsc --project tsconfig.electron.json
+
+      - name: Empacotar com electron-builder
+        working-directory: nodus-app
+        run: npx electron-builder --win portable --publish never
+
+      - name: Upload artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: nodus-desktop-win
+          path: nodus-app/dist-pkg/*.exe
+          retention-days: 14
