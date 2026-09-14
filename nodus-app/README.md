@@ -40,10 +40,10 @@ cd backend && npm run build   # backend — compila para dist/
 ## Testes
 
 ```bash
-npm test    # frontend (ng test)
+npm test              # frontend (ng test)
+cd backend && npm test  # backend — vitest (21 testes: auth, middleware, paciente, psicologo, sessao)
+cd backend && npm run test:coverage  # backend com relatório de cobertura
 ```
-
-O backend ainda não tem uma suíte de testes automatizados unificada — hoje há apenas scripts pontuais (`backend/test-security.js`, `backend/test-sprint5b.js`, rodáveis via `npm run test:security` / `npm run test:sprint5b`). Configurar CI e cobertura de testes é item do backlog do Sprint 1 (US03, ver o plano de conversão).
 
 ## Convenções de código
 
