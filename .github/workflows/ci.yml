@@ -72,7 +72,7 @@ jobs:
 
   build-desktop:
     name: Desktop — empacotamento Electron
-    needs: [test-frontend, typecheck-backend]
+    needs: [test-frontend, test-backend]
     runs-on: windows-latest
 
     steps:

@@ -3,6 +3,7 @@ import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as http from 'http';
+import * as crypto from 'crypto';
 
 const isProd = app.isPackaged;
 
@@ -38,6 +39,20 @@ function startStaticServer(): Promise<http.Server> {
   });
 }
 
+// Cada instalação recebe seu próprio segredo, gerado uma vez e persistido em
+// userData — evita que todo pacote Electron compartilhe o mesmo JWT_SECRET
+// hardcoded do backend (backend/src/middleware/auth.middleware.ts).
+function getOrCreateJwtSecret(): string {
+  const secretPath = path.join(app.getPath('userData'), 'jwt-secret');
+  if (fs.existsSync(secretPath)) {
+    return fs.readFileSync(secretPath, 'utf-8').trim();
+  }
+  const secret = crypto.randomBytes(48).toString('hex');
+  fs.mkdirSync(path.dirname(secretPath), { recursive: true });
+  fs.writeFileSync(secretPath, secret, { mode: 0o600 });
+  return secret;
+}
+
 function startBackend(): Promise<void> {
   return new Promise((resolve, reject) => {
     const dbPath = path.join(app.getPath('userData'), 'nodus.db');
@@ -51,6 +66,7 @@ function startBackend(): Promise<void> {
         ...process.env,
         DB_PATH: dbPath,
         PORT: '3000',
+        JWT_SECRET: getOrCreateJwtSecret(),
         NODE_ENV: isProd ? 'production' : 'development',
       },
       stdio: ['ignore', 'pipe', 'pipe'],

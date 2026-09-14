@@ -32,6 +32,7 @@ app.use('/api/pacientes', authMiddleware, pacienteRouter);
 app.use('/api/sessoes', authMiddleware, sessaoRouter);
 
 const PORT = process.env.PORT ?? 3000;
-app.listen(PORT, () => {
+const HOST = '127.0.0.1'; // loopback — nunca expor a API na rede local (RF01, decisão D1)
+app.listen(Number(PORT), HOST, () => {
   console.log(`Servidor NODUS rodando na porta ${PORT}`);
 });
