@@ -19,7 +19,7 @@ Dados de saúde mental são extremamente sensíveis, e boa parte das ferramentas
 
 ## Status do projeto
 
-Em pivô de arquitetura: de um protótipo mobile (Capacitor/Android + backend remoto + PostgreSQL) para um **executável desktop de uso individual** (Electron + backend local + SQLite embarcado). Sprint 1 da conversão em andamento.
+Pivô de arquitetura concluído na Sprint 1: de um protótipo mobile (Capacitor/Android + backend remoto + PostgreSQL) para um **executável desktop de uso individual** (Electron + backend local + SQLite embarcado), com banco embarcado, empacotamento Windows e CI funcionando. Sprint 2 (acesso e segurança — sessão local, bloqueio por inatividade) em andamento.
 
 - [`docs/PLANO-CONVERSAO-DESKTOP.md`](docs/PLANO-CONVERSAO-DESKTOP.md) — racional técnico completo do pivô: o que é aproveitado, adaptado e descartado do protótipo mobile.
 - [`docs/NODUS-Relatorio-PI3-Documento-Software-V1.pdf`](docs/NODUS-Relatorio-PI3-Documento-Software-V1.pdf) — documento de software formal (requisitos, backlog, modelo de dados).

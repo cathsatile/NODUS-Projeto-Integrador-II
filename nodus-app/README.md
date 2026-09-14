@@ -18,8 +18,6 @@ cd backend && npm install
 
 Configure o backend copiando `backend/.env.example` para `backend/.env` (nunca commitar o `.env`).
 
-> `backend/.env.example` ainda reflete o modelo atual (PostgreSQL). Ele será atualizado durante a migração para SQLite embarcado prevista no Sprint 1 — ver [`docs/PLANO-CONVERSAO-DESKTOP.md`](../docs/PLANO-CONVERSAO-DESKTOP.md).
-
 ## Rodando em desenvolvimento
 
 ```bash

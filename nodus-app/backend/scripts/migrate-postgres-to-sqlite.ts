@@ -1,5 +1,9 @@
 // backend/scripts/migrate-postgres-to-sqlite.ts
-// Uso: npx ts-node scripts/migrate-postgres-to-sqlite.ts
+// Uso: npm install pg --no-save && npx ts-node scripts/migrate-postgres-to-sqlite.ts
+//
+// `pg` não é mais dependência do backend (produto já roda 100% em SQLite) —
+// esta é uma operação de migração única, não recorrente. Instale ad-hoc só
+// quando precisar rodar este script contra um Postgres do protótipo antigo.
 //
 // Pré-condições:
 //   1. Postgres local rodando com o banco "NODUS" do protótipo
